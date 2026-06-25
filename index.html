@@ -5,588 +5,729 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>乖乖我爱你</title>
 <style>
+:root {
+  --bg: #0a0a14;
+  --card-bg: rgba(255,255,255,0.04);
+  --text: rgba(255,255,255,0.92);
+  --text-dim: rgba(255,255,255,0.55);
+  --pink: #ff4470;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0c0020 0%, #1a0040 30%, #2d0060 60%, #0c0020 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-  overflow-x: hidden;
-  cursor: default;
-  user-select: none;
+  width: 100vw; height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
 }
 
-/* ===== 星空 ===== */
-.stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-.star {
-  position: absolute; background: white; border-radius: 50%;
-  animation: twinkle var(--dur) ease-in-out infinite;
-  animation-delay: var(--delay);
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 1; transform: scale(2); }
+/* ── Three.js 画布 ── */
+#threeCanvas {
+  position: fixed; inset: 0; z-index: 0;
 }
 
-/* ===== 流星 ===== */
-.shooting-star {
-  position: fixed; width: 2px; height: 80px; pointer-events: none; z-index: 1;
-  background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
-  animation: shoot 1.2s ease-in forwards;
+/* ── 顶部标题 ── */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+  padding: clamp(16px, 4vh, 32px) 24px;
+  display: flex; justify-content: center;
+  pointer-events: none;
 }
-.shooting-star::after {
-  content: ''; position: absolute; top: 0; left: 0;
-  width: 100%; height: 8px; background: white; border-radius: 50%;
-  box-shadow: 0 0 10px 4px rgba(255,255,255,0.7);
+.title-group {
+  text-align: center;
 }
-@keyframes shoot {
-  0% { opacity: 0; transform: translate(0,0) rotate(-35deg); }
-  8% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-500px,500px) rotate(-35deg); }
-}
-
-/* ===== 标题 ===== */
 .title {
-  position: relative; z-index: 2;
-  font-size: clamp(2rem, 7vw, 4.5rem); font-weight: 900;
-  background: linear-gradient(45deg, #ff6b9d, #ff2d78, #ff6b9d, #ff99cc);
-  background-size: 300% 300%;
+  font-size: clamp(1.6rem, 5vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #ff6b9d, #ff2d6a, #ff6b9d, #ffb3c6);
+  background-size: 300% 100%;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradientShift 3s ease-in-out infinite;
-  margin-bottom: 8px; letter-spacing: 6px;
+  animation: titleShine 4s ease-in-out infinite;
+  line-height: 1.3;
 }
-@keyframes gradientShift {
+.subtitle {
+  font-size: clamp(0.8rem, 2vw, 1.1rem);
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+}
+@keyframes titleShine {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
 
-/* ===== 爱心容器 ===== */
-.heart-container {
-  position: relative; z-index: 2;
-  width: clamp(280px, 60vw, 450px);
-  height: clamp(260px, 55vw, 420px);
-  margin: 15px 0;
+/* ── 底部操作栏 ── */
+.footer {
+  position: fixed; bottom: clamp(16px, 3vh, 40px); left: 0; right: 0; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 0 16px;
 }
-.heart-3d {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  cursor: grab; transition: filter 0.3s;
-  filter: drop-shadow(0 0 30px rgba(255,50,100,0.5)) drop-shadow(0 0 60px rgba(255,50,100,0.3));
-}
-.heart-3d:active { cursor: grabbing; }
-.heart-3d:hover {
-  filter: drop-shadow(0 0 50px rgba(255,50,100,0.8)) drop-shadow(0 0 100px rgba(255,50,100,0.5));
-}
-.heart-svg {
-  width: clamp(280px, 60vw, 450px);
-  height: clamp(260px, 55vw, 420px);
-}
-.heart-path {
-  fill: url(#heartGradient);
-  stroke: #ff2d78;
-  stroke-width: 2;
-}
-.heart-glow {
-  fill: url(#glowGradient);
-  animation: heartPulse 1.5s ease-in-out infinite;
-}
-@keyframes heartPulse {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.06); opacity: 1; }
-}
-
-/* ===== 爱心上文字 ===== */
-.heart-text {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: bold;
-  color: white; text-align: center; pointer-events: none; z-index: 3;
-  text-shadow: 0 0 20px rgba(255,255,255,0.8); line-height: 1.6;
-}
-
-/* ===== 飘落粒子 ===== */
-.particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-.particle {
-  position: absolute; pointer-events: none;
-  animation: fall var(--fall-dur) linear infinite;
-  animation-delay: var(--fall-delay);
-  font-size: var(--size); opacity: 0.8;
-}
-@keyframes fall {
-  0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(110vh) translateX(var(--drift)) rotate(720deg); opacity: 0; }
-}
-
-/* ===== 点击泡泡 ===== */
-.bubble {
-  position: fixed; pointer-events: none; z-index: 10;
-  animation: bubbleUp 1.2s ease-out forwards;
-  font-size: var(--bsize);
-}
-@keyframes bubbleUp {
-  0% { transform: translate(0, 0) scale(0.3); opacity: 1; }
-  50% { transform: translate(var(--bx), var(--by)) scale(1.3); opacity: 0.8; }
-  100% { transform: translate(var(--bx), calc(var(--by) - 150px)) scale(0.4); opacity: 0; }
-}
-
-/* ===== 按钮 ===== */
-.actions {
-  position: relative; z-index: 2;
-  display: flex; flex-wrap: wrap; gap: 15px;
-  justify-content: center; margin-top: 12px;
+.btn-row {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
 }
 .btn {
-  padding: 14px 36px; border: none; border-radius: 50px;
-  font-size: 1.1rem; font-weight: bold; cursor: pointer;
-  transition: all 0.3s; font-family: inherit; letter-spacing: 2px;
+  padding: 11px 24px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 40px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text);
+  font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
 }
-.btn:active { transform: scale(0.93); }
-.btn-love {
-  background: linear-gradient(135deg, #ff2d78, #ff6b9d); color: white;
-  box-shadow: 0 6px 25px rgba(255,45,120,0.4);
+.btn:active { transform: scale(0.94); }
+.btn--primary {
+  background: rgba(255,45,105,0.22);
+  border-color: rgba(255,45,105,0.4);
 }
-.btn-love:hover { box-shadow: 0 10px 35px rgba(255,45,120,0.7); transform: translateY(-3px); }
-.btn-star {
-  background: linear-gradient(135deg, #ffd700, #ffaa00); color: #4a0040;
-  box-shadow: 0 6px 25px rgba(255,215,0,0.4);
+.btn--primary:hover {
+  background: rgba(255,45,105,0.35);
+  border-color: rgba(255,45,105,0.6);
+  box-shadow: 0 0 30px rgba(255,45,105,0.25);
 }
-.btn-star:hover { box-shadow: 0 10px 35px rgba(255,215,0,0.7); transform: translateY(-3px); }
-.btn-firework {
-  background: linear-gradient(135deg, #a855f7, #6366f1); color: white;
-  box-shadow: 0 6px 25px rgba(168,85,247,0.4);
+.btn--gold {
+  background: rgba(255,180,40,0.18);
+  border-color: rgba(255,180,40,0.35);
 }
-.btn-firework:hover { box-shadow: 0 10px 35px rgba(168,85,247,0.7); transform: translateY(-3px); }
-.btn-message {
-  background: linear-gradient(135deg, #06b6d4, #0ea5e9); color: white;
-  box-shadow: 0 6px 25px rgba(6,182,212,0.4);
+.btn--gold:hover {
+  background: rgba(255,180,40,0.3);
+  box-shadow: 0 0 30px rgba(255,180,40,0.2);
 }
-.btn-message:hover { box-shadow: 0 10px 35px rgba(6,182,212,0.7); transform: translateY(-3px); }
-.btn-music {
-  background: linear-gradient(135deg, #22c55e, #10b981); color: white;
-  box-shadow: 0 6px 25px rgba(34,197,94,0.4);
+.btn--purple {
+  background: rgba(140,80,255,0.18);
+  border-color: rgba(140,80,255,0.35);
 }
-.btn-music:hover { box-shadow: 0 10px 35px rgba(34,197,94,0.7); transform: translateY(-3px); }
-
-/* ===== 消息区 ===== */
-.message-area {
-  position: relative; z-index: 2; margin-top: 18px;
-  padding: 20px 30px; background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px); border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.1);
-  max-width: 520px; text-align: center; min-height: 55px;
-  display: flex; align-items: center; justify-content: center;
-}
-.message-text {
-  color: rgba(255,255,255,0.9);
-  font-size: clamp(1rem, 3vw, 1.3rem); line-height: 1.8;
-  transition: opacity 0.4s;
+.btn--purple:hover {
+  background: rgba(140,80,255,0.3);
+  box-shadow: 0 0 30px rgba(140,80,255,0.2);
 }
 
-/* ===== 烟花画布 ===== */
-#fireworkCanvas {
-  position: fixed; top: 0; left: 0;
-  width: 100%; height: 100%; pointer-events: none; z-index: 5;
+/* ── 提示条 ── */
+.toast {
+  padding: 10px 28px;
+  border-radius: 40px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+  font-size: clamp(0.78rem, 2vw, 0.9rem);
+  text-align: center;
+  letter-spacing: 0.04em;
+  transition: opacity 0.4s, transform 0.4s;
+  pointer-events: none;
+  max-width: 90vw;
+  line-height: 1.5;
+}
+.toast--hidden { opacity: 0; transform: translateY(8px); }
+
+/* ── 烟花画布 ── */
+#fwCanvas {
+  position: fixed; inset: 0; z-index: 5; pointer-events: none;
 }
 
-/* ===== 响应式 ===== */
+/* ── 响应式 ── */
 @media (max-width: 480px) {
-  .actions { gap: 10px; }
-  .btn { padding: 12px 24px; font-size: 0.9rem; }
+  .btn { padding: 10px 18px; font-size: 0.8rem; }
+  .btn-row { gap: 6px; }
+}
+
+@media (min-width: 768px) {
+  .btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+  }
+  .btn--primary:hover { transform: translateY(-2px); }
+  .btn--gold:hover { transform: translateY(-2px); }
+  .btn--purple:hover { transform: translateY(-2px); }
 }
 </style>
 </head>
 <body>
 
-<div class="stars" id="stars"></div>
-<canvas id="fireworkCanvas"></canvas>
+<canvas id="threeCanvas"></canvas>
+<canvas id="fwCanvas"></canvas>
 
-<h1 class="title">乖乖我爱你</h1>
-
-<div class="heart-container" id="heartContainer">
-  <div class="heart-3d" id="heart3d">
-    <svg class="heart-svg" viewBox="0 0 200 180">
-      <defs>
-        <radialGradient id="heartGradient" cx="50%" cy="30%" r="60%">
-          <stop offset="0%" stop-color="#ff4d6a"/>
-          <stop offset="50%" stop-color="#ff1a4a"/>
-          <stop offset="100%" stop-color="#cc0033"/>
-        </radialGradient>
-        <radialGradient id="glowGradient" cx="50%" cy="30%" r="70%">
-          <stop offset="0%" stop-color="rgba(255,100,130,0.5)"/>
-          <stop offset="100%" stop-color="rgba(255,0,50,0)"/>
-        </radialGradient>
-      </defs>
-      <path class="heart-glow" d="M100,175 C40,130 0,90 0,55 C0,25 22,5 50,5 C66,5 82,14 100,35 C118,14 134,5 150,5 C178,5 200,25 200,55 C200,90 160,130 100,175Z" />
-      <path class="heart-path" d="M100,175 C40,130 0,90 0,55 C0,25 22,5 50,5 C66,5 82,14 100,35 C118,14 134,5 150,5 C178,5 200,25 200,55 C200,90 160,130 100,175Z" />
-    </svg>
+<div class="header">
+  <div class="title-group">
+    <div class="title">乖乖我爱你</div>
+    <div class="subtitle">F O R E V E R &nbsp; L O V E</div>
   </div>
-  <div class="heart-text">乖乖<br>我爱你</div>
 </div>
 
-<div class="actions">
-  <button class="btn btn-love" id="btnLove">💖 发射爱心</button>
-  <button class="btn btn-star" id="btnStar">⭐ 许愿星</button>
-  <button class="btn btn-firework" id="btnFirework">🎆 烟花</button>
-  <button class="btn btn-message" id="btnMessage">💌 甜蜜话语</button>
-  <button class="btn btn-music" id="btnMusic">🎵 播放音乐</button>
+<div class="footer">
+  <div class="btn-row">
+    <button class="btn btn--primary" id="btnFirework">🎆 烟花</button>
+    <button class="btn btn--gold" id="btnStar">✨ 星空</button>
+    <button class="btn btn--purple" id="btnBubble">💖 爱心雨</button>
+    <button class="btn" id="btnMessage">💌 情话</button>
+    <button class="btn" id="btnMusic">🎵 音乐</button>
+  </div>
+  <div class="toast" id="toast">拖拽爱心旋转 · 双击放烟花</div>
 </div>
 
-<div class="message-area">
-  <span class="message-text" id="messageText">点击爱心试试看 💕</span>
-</div>
-<div class="particles" id="particles"></div>
-
-<script>
-// ===== 星空 =====
-const starsEl = document.getElementById('stars');
-for (let i = 0; i < 150; i++) {
-  const star = document.createElement('div');
-  star.className = 'star';
-  star.style.left = Math.random() * 100 + '%';
-  star.style.top = Math.random() * 100 + '%';
-  const size = Math.random() * 3 + 1;
-  star.style.width = size + 'px';
-  star.style.height = size + 'px';
-  star.style.setProperty('--dur', (Math.random() * 3 + 2) + 's');
-  star.style.setProperty('--delay', Math.random() * 5 + 's');
-  starsEl.appendChild(star);
-}
-
-// ===== 流星 =====
-function createShootingStar() {
-  const star = document.createElement('div');
-  star.className = 'shooting-star';
-  star.style.left = Math.random() * 80 + 10 + '%';
-  star.style.top = Math.random() * 30 + '%';
-  document.body.appendChild(star);
-  star.addEventListener('animationend', () => star.remove());
-}
-setInterval(() => { if (Math.random() < 0.3) createShootingStar(); }, 3000);
-createShootingStar();
-
-// ===== 飘落粒子 =====
-const particlesEl = document.getElementById('particles');
-const emojis = ['💕','💖','💗','💝','✨','🌸','💫','🩷','❤️','💘','🫶'];
-for (let i = 0; i < 30; i++) {
-  const p = document.createElement('div');
-  p.className = 'particle';
-  p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-  p.style.left = Math.random() * 100 + '%';
-  p.style.setProperty('--size', (Math.random() * 1.5 + 1) + 'rem');
-  p.style.setProperty('--fall-dur', (Math.random() * 8 + 6) + 's');
-  p.style.setProperty('--fall-delay', Math.random() * 10 + 's');
-  p.style.setProperty('--drift', (Math.random() - 0.5) * 200 + 'px');
-  particlesEl.appendChild(p);
-}
-
-// ===== 3D爱心旋转 =====
-const heart3d = document.getElementById('heart3d');
-let isDragging = false, rotX = 0, rotY = 0;
-let startX, startY, startRotX, startRotY;
-let autoRotate = true, autoAngle = 0;
-
-heart3d.addEventListener('mousedown', (e) => {
-  isDragging = true; autoRotate = false;
-  startX = e.clientX; startY = e.clientY;
-  startRotX = rotX; startRotY = rotY;
-  heart3d.style.cursor = 'grabbing';
-});
-heart3d.addEventListener('touchstart', (e) => {
-  isDragging = true; autoRotate = false;
-  startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-  startRotX = rotX; startRotY = rotY;
-}, { passive: true });
-
-document.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  rotY = startRotY + (e.clientX - startX) * 0.5;
-  rotX = startRotX - (e.clientY - startY) * 0.5;
-  rotX = Math.max(-45, Math.min(45, rotX));
-  rotY = Math.max(-45, Math.min(45, rotY));
-  updateHeartTransform();
-});
-document.addEventListener('touchmove', (e) => {
-  if (!isDragging) return;
-  rotY = startRotY + (e.touches[0].clientX - startX) * 0.5;
-  rotX = startRotX - (e.touches[0].clientY - startY) * 0.5;
-  rotX = Math.max(-45, Math.min(45, rotX));
-  rotY = Math.max(-45, Math.min(45, rotY));
-  updateHeartTransform();
-}, { passive: true });
-
-document.addEventListener('mouseup', () => {
-  isDragging = false; heart3d.style.cursor = 'grab';
-  if (Math.abs(rotX) < 3 && Math.abs(rotY) < 3) autoRotate = true;
-});
-document.addEventListener('touchend', () => {
-  isDragging = false;
-  if (Math.abs(rotX) < 3 && Math.abs(rotY) < 3) autoRotate = true;
-});
-
-function updateHeartTransform() {
-  heart3d.style.transform = `translate(-50%, -50%) perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
-}
-
-function autoRotateHeart() {
-  if (!autoRotate || isDragging) return;
-  autoAngle += 0.3;
-  rotY = Math.sin(autoAngle * Math.PI / 180) * 20;
-  rotX = Math.cos(autoAngle * Math.PI / 180) * 10;
-  updateHeartTransform();
-  requestAnimationFrame(autoRotateHeart);
-}
-autoRotateHeart();
-
-// 双击爱心放烟花
-heart3d.addEventListener('dblclick', (e) => {
-  e.preventDefault();
-  launchFireworks(8);
-  showMessage('满满的爱都给你 💖');
-  spawnBubbles(e.clientX, e.clientY, 18);
-});
-
-// ===== 爱心泡泡 =====
-function spawnBubbles(x, y, count) {
-  const hearts = ['❤️','💖','💕','💗','💝','💘','🩷','💓','✨','💌'];
-  for (let i = 0; i < count; i++) {
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = hearts[Math.floor(Math.random() * hearts.length)];
-    bubble.style.left = x + 'px'; bubble.style.top = y + 'px';
-    bubble.style.setProperty('--bx', (Math.random() - 0.5) * 200 + 'px');
-    bubble.style.setProperty('--by', -(Math.random() * 100 + 50) + 'px');
-    bubble.style.setProperty('--bsize', (Math.random() * 1.5 + 1.2) + 'rem');
-    bubble.style.animationDelay = Math.random() * 0.3 + 's';
-    document.body.appendChild(bubble);
-    bubble.addEventListener('animationend', () => bubble.remove());
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
   }
 }
+</script>
 
-// 点击爱心
-document.getElementById('heartContainer').addEventListener('click', (e) => {
-  if (isDragging) return;
-  spawnBubbles(e.clientX, e.clientY, 8);
-  const msgs = ['乖乖最好啦~ 🥰','好爱好爱你 💕','今天也要开心哦','你是最珍贵的宝贝 💎','永远在一起 🌈'];
-  showMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+<script type="module">
+import * as THREE from 'three';
+
+// ═══════════════════════════════════════════
+//  THREE.JS 3D 爱心
+// ═══════════════════════════════════════════
+
+const canvas3d = document.getElementById('threeCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0.3, 9);
+
+// 灯光
+const ambientLight = new THREE.AmbientLight('#442244', 1.8);
+scene.add(ambientLight);
+const keyLight = new THREE.DirectionalLight('#ffffff', 4);
+keyLight.position.set(5, 4, 8);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight('#ff6688', 3);
+rimLight.position.set(-3, 0, -5);
+scene.add(rimLight);
+const topLight = new THREE.DirectionalLight('#ffaacc', 2);
+topLight.position.set(0, 6, 0);
+scene.add(topLight);
+const bottomLight = new THREE.DirectionalLight('#6644aa', 1.5);
+bottomLight.position.set(0, -4, 3);
+scene.add(bottomLight);
+
+// 爱心几何体
+function createHeartShape(scale = 0.22) {
+  const shape = new THREE.Shape();
+  const steps = 80;
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * Math.PI * 2;
+    const x = 16 * Math.pow(Math.sin(t), 3) * scale;
+    const y = (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) * scale;
+    if (i === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
+  }
+  return shape;
+}
+
+const heartShape = createHeartShape(0.22);
+const extrudeSettings = { depth: 0.55, bevelEnabled: true, bevelThickness: 0.28, bevelSize: 0.18, bevelSegments: 3 };
+const heartGeom = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+heartGeom.center();
+heartGeom.computeVertexNormals();
+
+// 玻璃材质爱心
+const heartMaterial = new THREE.MeshPhysicalMaterial({
+  color: '#ff3060',
+  metalness: 0.05,
+  roughness: 0.15,
+  clearcoat: 0.4,
+  clearcoatRoughness: 0.2,
+  specularIntensity: 1.2,
+  specularColor: '#ff8899',
+  envMapIntensity: 0.5,
+  emissive: '#330011',
+  emissiveIntensity: 0.3,
 });
 
-// ===== 烟花系统 =====
-const fwCanvas = document.getElementById('fireworkCanvas');
+const heartMesh = new THREE.Mesh(heartGeom, heartMaterial);
+heartMesh.rotation.x = Math.PI;
+scene.add(heartMesh);
+
+// 光晕外壳
+const glowGeom = new THREE.ExtrudeGeometry(heartShape, { depth: 0.65, bevelEnabled: true, bevelThickness: 0.45, bevelSize: 0.3, bevelSegments: 2 });
+glowGeom.center();
+const glowMaterial = new THREE.MeshBasicMaterial({
+  color: '#ff4470',
+  transparent: true,
+  opacity: 0.08,
+  side: THREE.BackSide,
+});
+const glowMesh = new THREE.Mesh(glowGeom, glowMaterial);
+glowMesh.rotation.x = Math.PI;
+glowMesh.scale.set(1.06, 1.06, 1.06);
+scene.add(glowMesh);
+
+// 粒子环
+const ringParticlesGeom = new THREE.BufferGeometry();
+const ringCount = 300;
+const ringPositions = new Float32Array(ringCount * 3);
+const ringSizes = new Float32Array(ringCount);
+for (let i = 0; i < ringCount; i++) {
+  const angle = (i / ringCount) * Math.PI * 2;
+  const r = 2.4 + Math.random() * 0.3;
+  const y = (Math.random() - 0.5) * 3.5;
+  ringPositions[i*3] = Math.cos(angle) * r * (0.7 + 0.3 * Math.random());
+  ringPositions[i*3+1] = y;
+  ringPositions[i*3+2] = Math.sin(angle) * r * (0.7 + 0.3 * Math.random());
+  ringSizes[i] = Math.random() * 2.5 + 0.5;
+}
+ringParticlesGeom.setAttribute('position', new THREE.BufferAttribute(ringPositions, 3));
+ringParticlesGeom.setAttribute('size', new THREE.BufferAttribute(ringSizes, 1));
+const ringMaterial = new THREE.PointsMaterial({
+  color: '#ff8899',
+  size: 0.03,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  opacity: 0.6,
+});
+const ringParticles = new THREE.Points(ringParticlesGeom, ringMaterial);
+scene.add(ringParticles);
+
+// ═══════════════════════════════════════════
+//  交互: 拖拽旋转
+// ═══════════════════════════════════════════
+
+let isDragging = false;
+let prevMouse = { x: 0, y: 0 };
+let targetRotY = 0, targetRotX = 0.2;
+let currentRotY = 0, currentRotX = 0.2;
+let autoRotate = true;
+let autoAngle = 0;
+
+function getEventPos(e) {
+  if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  return { x: e.clientX, y: e.clientY };
+}
+
+canvas3d.addEventListener('pointerdown', (e) => {
+  isDragging = true; autoRotate = false;
+  const pos = getEventPos(e);
+  prevMouse.x = pos.x; prevMouse.y = pos.y;
+  canvas3d.setPointerCapture(e.pointerId);
+});
+
+canvas3d.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const pos = getEventPos(e);
+  const dx = pos.x - prevMouse.x;
+  const dy = pos.y - prevMouse.y;
+  targetRotY += dx * 0.005;
+  targetRotX += dy * 0.005;
+  targetRotX = Math.max(-Math.PI/3, Math.min(Math.PI/3, targetRotX));
+  prevMouse = pos;
+});
+
+canvas3d.addEventListener('pointerup', () => {
+  isDragging = false;
+  if (Math.abs(targetRotY - currentRotY) < 0.02 && Math.abs(targetRotX - currentRotX) < 0.02) {
+    setTimeout(() => { if (!isDragging) autoRotate = true; }, 800);
+  } else {
+    autoRotate = true;
+  }
+});
+
+canvas3d.addEventListener('dblclick', (e) => {
+  e.preventDefault();
+  launchFireworks(10);
+  showToast('满满的爱都给你 💖');
+});
+
+// 触摸双击
+let lastTap = 0;
+canvas3d.addEventListener('pointerup', (e) => {
+  const now = Date.now();
+  if (now - lastTap < 300 && !isDragging) {
+    launchFireworks(10);
+    showToast('满满的爱都给你 💖');
+  }
+  lastTap = now;
+});
+
+// 键盘
+window.addEventListener('keydown', (e) => {
+  switch(e.key.toLowerCase()) {
+    case 'f': launchFireworks(8); showToast('🎆 为你绽放！'); break;
+    case 'b': spawnBubbles(window.innerWidth/2, window.innerHeight/2, 20); showToast('💖 爱心雨！'); break;
+    case 'm': showRandomMessage(); break;
+  }
+});
+
+// ═══════════════════════════════════════════
+//  烟花系统 (Canvas 2D)
+// ═══════════════════════════════════════════
+
+const fwCanvas = document.getElementById('fwCanvas');
 const fwCtx = fwCanvas.getContext('2d');
 let fireworks = [];
 
-function resizeCanvas() {
+function resizeFwCanvas() {
   fwCanvas.width = window.innerWidth;
   fwCanvas.height = window.innerHeight;
 }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+resizeFwCanvas();
 
-class FwParticle {
-  constructor(x, y, color) {
-    this.x = x; this.y = y; this.color = color;
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 6 + 2;
-    this.vx = Math.cos(angle) * speed;
-    this.vy = Math.sin(angle) * speed;
-    this.life = 1;
-    this.decay = Math.random() * 0.015 + 0.008;
-    this.size = Math.random() * 3 + 1.5;
+class Rocket {
+  constructor(x, targetY) {
+    this.x = x; this.y = window.innerHeight;
+    this.targetY = targetY;
+    this.speed = 8 + Math.random() * 6;
+    this.trail = [];
+    this.color = ['#ff2d6a','#ffd740','#ff8c00','#a855f7','#06b6d4','#ff6b9d'][Math.floor(Math.random()*6)];
   }
   update() {
-    this.x += this.vx; this.y += this.vy;
-    this.vy += 0.04; this.life -= this.decay; this.vx *= 0.99;
+    this.trail.push({ x: this.x, y: this.y, life: 1 });
+    if (this.trail.length > 20) this.trail.shift();
+    this.y -= this.speed;
+    this.trail.forEach(t => t.life -= 0.05);
+    return this.y <= this.targetY;
   }
   draw(ctx) {
-    ctx.save(); ctx.globalAlpha = this.life;
-    ctx.fillStyle = this.color; ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+    this.trail.forEach(t => {
+      ctx.save();
+      ctx.globalAlpha = t.life * 0.6;
+      ctx.fillStyle = this.color;
+      ctx.shadowBlur = 8; ctx.shadowColor = this.color;
+      ctx.beginPath(); ctx.arc(t.x, t.y, 2.5, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+    // 火箭头
+    ctx.save();
+    ctx.fillStyle = '#fff'; ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+    ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
 }
 
-class Firework {
+class Spark {
+  constructor(x, y, color) {
+    this.x = x; this.y = y;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 7 + 2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.color = color;
+    this.life = 1;
+    this.decay = Math.random() * 0.018 + 0.006;
+    this.size = Math.random() * 2.5 + 0.8;
+    this.gravity = 0.03;
+    this.friction = 0.985;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vy += this.gravity;
+    this.vx *= this.friction; this.vy *= this.friction;
+    this.life -= this.decay;
+  }
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 6; ctx.shadowColor = this.color;
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+class FireworkBurst {
   constructor(x, y) {
-    this.particles = [];
-    const colors = ['#ff2d78','#ff6b9d','#ffd700','#ff8c00','#a855f7','#06b6d4','#22c55e','#ff1493','#00ffff'];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    for (let i = 0; i < 80; i++) {
-      this.particles.push(new FwParticle(x, y, color));
+    this.sparks = [];
+    const colors = ['#ff2d6a','#ff6b9d','#ffd740','#ff8c00','#a855f7','#22d3ee','#ff4470','#fbbf24','#f472b6'];
+    const palette = [colors[Math.floor(Math.random()*colors.length)], colors[Math.floor(Math.random()*colors.length)], colors[Math.floor(Math.random()*colors.length)]];
+    for (let i = 0; i < 120; i++) {
+      this.sparks.push(new Spark(x, y, palette[Math.floor(Math.random()*3)]));
     }
   }
-  update() { this.particles.forEach(p => p.update()); this.particles = this.particles.filter(p => p.life > 0); }
-  draw(ctx) { this.particles.forEach(p => p.draw(ctx)); }
-  get done() { return this.particles.length === 0; }
+  update() { this.sparks.forEach(s => s.update()); this.sparks = this.sparks.filter(s => s.life > 0); }
+  draw(ctx) { this.sparks.forEach(s => s.draw(ctx)); }
+  get done() { return this.sparks.length === 0; }
 }
 
 function launchFireworks(count) {
   for (let i = 0; i < count; i++) {
     setTimeout(() => {
-      const x = Math.random() * window.innerWidth * 0.8 + window.innerWidth * 0.1;
-      const y = Math.random() * window.innerHeight * 0.5 + window.innerHeight * 0.1;
-      fireworks.push(new Firework(x, y));
-    }, i * 200);
+      const x = window.innerWidth * 0.1 + Math.random() * window.innerWidth * 0.8;
+      const targetY = window.innerHeight * 0.08 + Math.random() * window.innerHeight * 0.45;
+      fireworks.push({ type: 'rocket', obj: new Rocket(x, targetY) });
+    }, i * 150);
   }
 }
 
 function animateFireworks() {
   fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
-  fireworks.forEach(f => { f.update(); f.draw(fwCtx); });
-  fireworks = fireworks.filter(f => !f.done);
+  const newFireworks = [];
+  for (const fw of fireworks) {
+    if (fw.type === 'rocket') {
+      const reached = fw.obj.update();
+      fw.obj.draw(fwCtx);
+      if (reached) {
+        newFireworks.push({ type: 'burst', obj: new FireworkBurst(fw.obj.x, fw.obj.y) });
+      } else {
+        newFireworks.push(fw);
+      }
+    } else {
+      fw.obj.update(); fw.obj.draw(fwCtx);
+      if (!fw.obj.done) newFireworks.push(fw);
+    }
+  }
+  fireworks = newFireworks;
   requestAnimationFrame(animateFireworks);
 }
 animateFireworks();
 
-// ===== 消息系统 =====
-const messageText = document.getElementById('messageText');
-let messageTimeout;
-function showMessage(msg) {
-  messageText.style.opacity = 0;
-  clearTimeout(messageTimeout);
-  setTimeout(() => { messageText.textContent = msg; messageText.style.opacity = 1; }, 300);
-  messageTimeout = setTimeout(() => {
-    messageText.style.opacity = 0;
-    setTimeout(() => { messageText.textContent = '点击爱心试试看 💕'; messageText.style.opacity = 1; }, 300);
-  }, 4000);
+// ═══════════════════════════════════════════
+//  爱心泡泡雨
+// ═══════════════════════════════════════════
+
+function spawnBubbles(x, y, count) {
+  const types = ['❤️','💖','💕','💗','💝','💘','✨','💌','🩷','💓','🌟','🫧'];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.style.cssText = `
+      position: fixed; pointer-events: none; z-index: 20;
+      left: ${x + (Math.random()-0.5)*30}px;
+      top: ${y + (Math.random()-0.5)*30}px;
+      font-size: ${Math.random()*2+1.2}rem;
+      animation: bubbleFloat ${Math.random()*1+1.2}s ease-out forwards;
+      animation-delay: ${Math.random()*0.25}s;
+    `;
+    el.textContent = types[Math.floor(Math.random()*types.length)];
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
 }
 
-// ===== 按钮事件 =====
-document.getElementById('btnLove').addEventListener('click', (e) => {
-  const rect = document.getElementById('heartContainer').getBoundingClientRect();
-  spawnBubbles(rect.left + rect.width/2, rect.top + rect.height/2, 20);
-  showMessage('爱你一万年 ❤️‍🔥');
-});
-
-document.getElementById('btnStar').addEventListener('click', () => {
-  launchFireworks(5);
-  for (let i = 0; i < 20; i++) {
-    setTimeout(() => {
-      const b = document.createElement('div');
-      b.className = 'bubble'; b.textContent = '⭐';
-      b.style.left = Math.random() * 80 + 10 + '%';
-      b.style.top = Math.random() * 60 + 20 + '%';
-      b.style.setProperty('--bx', (Math.random()-0.5)*150+'px');
-      b.style.setProperty('--by', -(Math.random()*80+40)+'px');
-      b.style.setProperty('--bsize', (Math.random()*2+2)+'rem');
-      document.body.appendChild(b);
-      b.addEventListener('animationend', () => b.remove());
-    }, i * 60);
+// 注入泡泡动画
+const bubbleStyle = document.createElement('style');
+bubbleStyle.textContent = `
+  @keyframes bubbleFloat {
+    0% { transform: translate(0,0) scale(0.2); opacity: 1; }
+    40% { transform: translate(${(Math.random()-0.5)*160}px, -80px) scale(1.3); opacity: 0.85; }
+    100% { transform: translate(${(Math.random()-0.5)*200}px, -200px) scale(0.4); opacity: 0; }
   }
-  showMessage('许个愿望吧 ✨ 希望乖乖每天都幸福');
-});
+`;
+document.head.appendChild(bubbleStyle);
 
-document.getElementById('btnFirework').addEventListener('click', () => {
-  launchFireworks(12);
-  showMessage('为你绽放最美的烟花 🎆');
-});
+// ═══════════════════════════════════════════
+//  Toast 消息
+// ═══════════════════════════════════════════
 
-document.getElementById('btnMessage').addEventListener('click', () => {
-  const sweetMessages = [
-    '在这个世界上，我最幸运的事就是遇见你 💕',
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  toastEl.classList.remove('toast--hidden');
+  toastEl.textContent = msg;
+  toastTimer = setTimeout(() => {
+    toastEl.classList.add('toast--hidden');
+  }, 3000);
+}
+
+function showRandomMessage() {
+  const msgs = [
+    '在这个世界上，最幸运的事就是遇见你 💕',
     '乖乖，你的笑容是我每天的阳光 ☀️',
     '无论多远，我的心都和你在一起 🌍',
     '你是我生命中最美好的意外 💝',
-    '陪你看遍世间所有美好 🏔️',
     '每一天都想对你说：我爱你 ❤️',
     '你是我的心跳，是我的唯一 💗',
     '想和你一起慢慢变老 👵👴',
     '乖乖是这个世界上最可爱的人 🥰',
     '遇见你，是我这辈子最大的幸运 🍀',
     '春风十里不如你 🌸',
-    '愿做你的守护星，永远闪亮 ⭐',
-    '爱你就像爱生命 📖',
     '你就是我的全世界 🌎',
-    '和你在一起的每一秒都很甜 🍯'
+    '和你在一起的每一秒都很甜 🍯',
+    '愿做你的守护星，永远闪亮 ⭐',
+    '陪你看遍世间所有美好 🏔️',
+    '爱你就像爱生命 📖',
   ];
-  showMessage(sweetMessages[Math.floor(Math.random() * sweetMessages.length)]);
-  spawnBubbles(window.innerWidth/2, window.innerHeight/2, 12);
-});
+  showToast(msgs[Math.floor(Math.random() * msgs.length)]);
+  spawnBubbles(window.innerWidth/2, window.innerHeight * 0.5, 12);
+}
 
-// ===== 音乐 =====
-let audioCtx = null, musicPlaying = false, musicInterval = null;
+// ═══════════════════════════════════════════
+//  音乐合成
+// ═══════════════════════════════════════════
 
-document.getElementById('btnMusic').addEventListener('click', () => {
+let audioCtx = null, musicPlaying = false, musicTimeout = null;
+
+function toggleMusic() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
   }
   if (musicPlaying) {
-    clearTimeout(musicInterval); musicPlaying = false;
-    document.getElementById('btnMusic').textContent = '🎵 播放音乐';
-    showMessage('音乐已暂停 🎼');
+    clearTimeout(musicTimeout); musicPlaying = false;
+    document.getElementById('btnMusic').textContent = '🎵 音乐';
+    showToast('音乐已暂停');
     return;
   }
   musicPlaying = true;
-  document.getElementById('btnMusic').textContent = '🎵 暂停音乐';
-  showMessage('正在为你演奏爱的旋律... 🎶');
+  document.getElementById('btnMusic').textContent = '🎵 暂停';
+  showToast('正在为你演奏爱的旋律 ♪');
 
+  // 《卡农》简化旋律: D大调
   const melody = [
-    262,262,392,392,440,440,392,
-    349,349,330,330,294,294,262,
-    392,392,349,349,330,330,294,
-    392,392,349,349,330,330,294,
-    262,262,392,392,440,440,392,
-    349,349,330,330,294,294,262
+    294,329,370,392, 440,392,370,329,  // D E F# G A G F# E
+    294,220,247,262, 294,262,247,220,  // D A B C D C B A
+    196,220,247,294, 329,294,247,220,  // G A B D E D B A
+    196,220,247,294, 329,294,247,262,  // G A B D E D B C
+    294,329,370,392, 440,392,370,329,  // D E F# G A G F# E
+    294,262,247,220, 196,220,247,294,  // D C B A G A B D
   ];
-  const noteDuration = 280;
-  let noteIndex = 0;
+  const bassNotes = [147, 110, 98, 130, 147, 110, 98, 130, 147, 110, 98, 130, 147, 110, 98, 130];
+  const chordRoots = [147,110,98,130,147,110,98,130, 147,110,98,130,147,110,98,130];
+  const noteLen = 0.35;
+  let idx = 0;
+
+  function playChord(root) {
+    const thirds = [4, 3, 4, 3, 4, 3, 3, 4, 4, 3, 4, 3, 4, 3, 3, 4];
+    const interval = thirds[idx % 16];
+    const notes = [root, root * Math.pow(2, interval/12), root * Math.pow(2, 7/12)];
+    notes.forEach((freq, j) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = j === 0 ? 'triangle' : 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(j === 0 ? 0.08 : 0.05, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + noteLen * 0.85);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + noteLen * 0.85);
+    });
+  }
 
   function playNote() {
     if (!musicPlaying || !audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = melody[noteIndex % melody.length];
-    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + noteDuration/1000);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + noteDuration/1000);
-    noteIndex++;
-    musicInterval = setTimeout(playNote, noteDuration);
+    const mi = idx % melody.length;
+    // 主旋律
+    const osc1 = audioCtx.createOscillator();
+    const g1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.value = melody[mi];
+    g1.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    g1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + noteLen * 0.9);
+    osc1.connect(g1); g1.connect(audioCtx.destination);
+    osc1.start(); osc1.stop(audioCtx.currentTime + noteLen * 0.9);
+
+    // 泛音
+    const osc2 = audioCtx.createOscillator();
+    const g2 = audioCtx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.value = melody[mi] * 2;
+    g2.gain.setValueAtTime(0.03, audioCtx.currentTime);
+    g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + noteLen * 0.7);
+    osc2.connect(g2); g2.connect(audioCtx.destination);
+    osc2.start(); osc2.stop(audioCtx.currentTime + noteLen * 0.7);
+
+    // 和弦
+    if (mi % 4 === 0) playChord(chordRoots[Math.floor(mi / 4) % chordRoots.length]);
+    // 低音
+    if (mi % 2 === 0) {
+      const oscB = audioCtx.createOscillator();
+      const gB = audioCtx.createGain();
+      oscB.type = 'triangle';
+      oscB.frequency.value = bassNotes[Math.floor(mi / 2) % bassNotes.length];
+      gB.gain.setValueAtTime(0.07, audioCtx.currentTime);
+      gB.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + noteLen * 1.6);
+      oscB.connect(gB); gB.connect(audioCtx.destination);
+      oscB.start(); oscB.stop(audioCtx.currentTime + noteLen * 1.6);
+    }
+    idx++;
+    musicTimeout = setTimeout(playNote, noteLen * 1000);
   }
   playNote();
-});
+}
 
-// ===== 键盘快捷键 =====
-document.addEventListener('keydown', (e) => {
-  switch(e.key.toLowerCase()) {
-    case 'f': launchFireworks(8); showMessage('🎆 为你绽放！'); break;
-    case 'l': spawnBubbles(window.innerWidth/2, window.innerHeight/2, 15); showMessage('💖 爱心攻击！'); break;
-    case 'm':
-      const msgs = [
-        '乖乖最好啦~ 🥰','好爱好爱你 💕','今天也要开心哦',
-        '你是最珍贵的宝贝 💎','永远在一起 🌈','爱的抱抱 🤗',
-        '想你了 💭','乖乖真好看 🌹','摸摸头 🫳'
-      ];
-      showMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-      break;
-    case 's':
-      for (let i = 0; i < 15; i++) {
-        setTimeout(() => {
-          const b = document.createElement('div');
-          b.className = 'bubble'; b.textContent = '⭐';
-          b.style.left = Math.random()*80+10+'%';
-          b.style.top = Math.random()*60+20+'%';
-          b.style.setProperty('--bx', (Math.random()-0.5)*150+'px');
-          b.style.setProperty('--by', -(Math.random()*80+40)+'px');
-          b.style.setProperty('--bsize', (Math.random()*2+2)+'rem');
-          document.body.appendChild(b);
-          b.addEventListener('animationend', () => b.remove());
-        }, i*50);
-      }
-      showMessage('满天都是小星星 ⭐');
-      break;
+// ═══════════════════════════════════════════
+//  按钮绑定
+// ═══════════════════════════════════════════
+
+document.getElementById('btnFirework').addEventListener('click', () => {
+  launchFireworks(12);
+  showToast('为你绽放最美的烟花 🎆');
+});
+document.getElementById('btnStar').addEventListener('click', () => {
+  launchFireworks(6);
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => spawnBubbles(
+      Math.random()*window.innerWidth*0.8 + window.innerWidth*0.1,
+      Math.random()*window.innerHeight*0.4 + window.innerHeight*0.05, 3
+    ), i * 40);
   }
+  showToast('满天繁星，都不如你眼睛里的光 ✨');
+});
+document.getElementById('btnBubble').addEventListener('click', () => {
+  const cx = window.innerWidth/2, cy = window.innerHeight * 0.45;
+  for (let i = 0; i < 8; i++) {
+    setTimeout(() => spawnBubbles(cx + (Math.random()-0.5)*200, cy + (Math.random()-0.5)*150, 8), i * 100);
+  }
+  showToast('爱你一万遍都不够 💖');
+});
+document.getElementById('btnMessage').addEventListener('click', showRandomMessage);
+document.getElementById('btnMusic').addEventListener('click', toggleMusic);
+
+// 窗口调整
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  resizeFwCanvas();
 });
 
-// 提示
-setTimeout(() => {
-  showMessage('提示: 拖动爱心旋转 | 双击爱心放烟花 | 按F烟花 L爱心 M情话 S星星 💕');
-}, 2500);
+// ═══════════════════════════════════════════
+//  渲染循环
+// ═══════════════════════════════════════════
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  // 平滑旋转
+  if (autoRotate) {
+    autoAngle += 0.004;
+    targetRotY = Math.sin(autoAngle) * 0.55;
+    targetRotX = 0.2 + Math.cos(autoAngle * 1.3) * 0.12;
+  }
+  currentRotY += (targetRotY - currentRotY) * 0.06;
+  currentRotX += (targetRotX - currentRotX) * 0.06;
+  heartMesh.rotation.y = currentRotY;
+  heartMesh.rotation.x = currentRotX;
+  glowMesh.rotation.copy(heartMesh.rotation);
+  ringParticles.rotation.y = currentRotY;
+  ringParticles.rotation.x = currentRotX;
+
+  // 爱心微缩放呼吸
+  const breathe = 1 + Math.sin(Date.now() * 0.002) * 0.015;
+  heartMesh.scale.setScalar(breathe);
+  glowMesh.scale.setScalar(breathe * 1.06);
+
+  // 粒子环旋转
+  ringParticles.rotation.z += 0.001;
+
+  // 光晕脉冲
+  glowMaterial.opacity = 0.06 + Math.sin(Date.now() * 0.003) * 0.025;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// 启动一朵烟花
+setTimeout(() => launchFireworks(3), 800);
 </script>
 </body>
 </html>
