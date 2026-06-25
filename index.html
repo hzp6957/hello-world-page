@@ -73,6 +73,16 @@ body {
 </head>
 <body>
 
+<!-- 入场提问遮罩 -->
+<div id="gate" style="position:fixed;inset:0;z-index:999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;">
+  <div id="gateQuestion" style="font-size:clamp(2rem,7vw,4rem);font-weight:800;color:#ff6b9d;text-shadow:0 0 40px rgba(255,107,157,0.5);letter-spacing:0.06em;transition:all 0.4s;">你爱我吗？</div>
+  <div style="display:flex;gap:24px;position:relative;">
+    <button id="gateYes" style="padding:14px 48px;font-size:clamp(1rem,3vw,1.4rem);font-weight:700;border:2px solid rgba(255,107,157,0.5);border-radius:50px;background:rgba(255,107,157,0.25);color:#ffb3c6;cursor:pointer;letter-spacing:0.06em;transition:all 0.3s;">是 💕</button>
+    <button id="gateNo" style="padding:14px 48px;font-size:clamp(1rem,3vw,1.4rem);font-weight:700;border:2px solid rgba(255,255,255,0.2);border-radius:50px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);cursor:pointer;letter-spacing:0.06em;transition:all 0.15s;position:relative;">否</button>
+  </div>
+  <div id="gateHint" style="min-height:28px;font-size:0.9rem;color:rgba(255,255,255,0.4);letter-spacing:0.04em;"></div>
+</div>
+
 <canvas id="heartCanvas"></canvas>
 <canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
@@ -95,6 +105,83 @@ body {
 </audio>
 
 <script>
+// ═══════════════════════════════════════════
+//  入场提问
+// ═══════════════════════════════════════════
+
+const gateEl = document.getElementById('gate');
+const gateYes = document.getElementById('gateYes');
+const gateNo = document.getElementById('gateNo');
+const gateQuestion = document.getElementById('gateQuestion');
+const gateHint = document.getElementById('gateHint');
+let gatePassed = false;
+
+const rejectMessages = [
+  '不行哦，再想想~', '真的吗？再给你一次机会', '我不信，重来！',
+  '别这样嘛，重新选好不好', '你怎么忍心说出口...', '哼，我不接受！',
+  '快选"是"啦~', '不可能！重新选！', '再试一次，我会等你的',
+  '这不是正确答案哦', '哈哈，我知道你手滑了', '求求你了，选"是"吧'
+];
+
+let noClickCount = 0;
+
+gateYes.addEventListener('click', () => {
+  if (gatePassed) return;
+  gatePassed = true;
+  gateQuestion.textContent = '我就知道 💕';
+  gateQuestion.style.transform = 'scale(1.1)';
+  gateHint.textContent = '';
+  gateHint.style.opacity = '0';
+  gateNo.style.display = 'none';
+  gateYes.textContent = '🥰 爱你';
+
+  setTimeout(() => {
+    gateEl.style.opacity = '0';
+    gateEl.style.pointerEvents = 'none';
+    gateEl.style.transition = 'opacity 0.8s';
+
+    // 播放音乐
+    bgm.play().then(() => {
+      musicPlaying = true;
+      document.getElementById('btnMusic').textContent = '🎵 暂停';
+    }).catch(() => {});
+
+    // 欢迎烟花
+    setTimeout(() => launchFireworks(6), 400);
+  }, 600);
+});
+
+gateNo.addEventListener('click', () => {
+  if (gatePassed) return;
+  noClickCount++;
+  const msg = rejectMessages[Math.floor(Math.random() * rejectMessages.length)];
+  gateHint.textContent = msg;
+  gateHint.style.color = '#ff6b9d';
+  gateHint.style.opacity = '1';
+
+  // "否"按钮逃跑 — 每次点就跳到新位置
+  const dx = (Math.random() * 260 - 130);
+  const dy = (Math.random() * 120 - 60);
+  gateNo.style.position = 'relative';
+  gateNo.style.left = dx + 'px';
+  gateNo.style.top = dy + 'px';
+
+  // 如果连续拒绝多次，"是"按钮变大
+  if (noClickCount >= 3) {
+    const scale = 1 + noClickCount * 0.15;
+    gateYes.style.transform = `scale(${scale})`;
+    gateYes.style.fontSize = `clamp(1rem, 3vw, ${1.4 + noClickCount * 0.1}rem)`;
+    gateYes.style.padding = `${14 + noClickCount * 2}px ${48 + noClickCount * 6}px`;
+  }
+});
+
+gateYes.addEventListener('mouseenter', () => {
+  if (!gatePassed) gateYes.style.transform = 'scale(1.08)';
+});
+gateYes.addEventListener('mouseleave', () => {
+  if (!gatePassed) gateYes.style.transform = 'scale(1)';
+});
+
 // ═══════════════════════════════════════════
 //  爱心粒子动画
 // ═══════════════════════════════════════════
