@@ -17,11 +17,9 @@ body {
   user-select:none;-webkit-user-select:none;
 }
 
-#heartCanvas {
-  position:fixed;inset:0;z-index:0;
-}
+#heartCanvas { position:fixed;inset:0;z-index:0; }
+#sparkleCanvas { position:fixed;inset:0;z-index:2;pointer-events:none; }
 
-/* 标题 */
 .header {
   position:fixed;top:0;left:0;right:0;z-index:10;
   padding:clamp(14px,3vh,28px) 24px;display:flex;justify-content:center;
@@ -36,7 +34,6 @@ body {
 }
 @keyframes titleShine { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
 
-/* 底部 */
 .footer {
   position:fixed;bottom:clamp(10px,3vh,34px);left:0;right:0;z-index:10;
   display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px;
@@ -69,9 +66,7 @@ body {
 }
 .toast--hidden{opacity:0;transform:translateY(8px)}
 
-#fwCanvas {
-  position:fixed;inset:0;z-index:5;pointer-events:none;
-}
+#fwCanvas { position:fixed;inset:0;z-index:5;pointer-events:none; }
 
 @media (max-width:480px) { .btn{padding:9px 16px;font-size:0.78rem}.btn-row{gap:6px} }
 </style>
@@ -79,11 +74,10 @@ body {
 <body>
 
 <canvas id="heartCanvas"></canvas>
+<canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
 
-<div class="header">
-  <div class="title">乖乖我爱你</div>
-</div>
+<div class="header"><div class="title">乖乖我爱你</div></div>
 
 <div class="footer">
   <div class="btn-row">
@@ -96,9 +90,14 @@ body {
   <div class="toast" id="toast">点击爱心有惊喜 · 按F放烟花</div>
 </div>
 
+<!-- 音乐播放器 -->
+<audio id="bgm" preload="auto" loop style="display:none">
+  <source src="a-thousand-years.mp3" type="audio/mpeg">
+</audio>
+
 <script>
 // ═══════════════════════════════════════════
-//  爱心粒子动画 - 高性能版
+//  爱心粒子动画
 // ═══════════════════════════════════════════
 
 const heartCanvas = document.getElementById('heartCanvas');
@@ -129,118 +128,112 @@ function scatterXY(x, y, beta) {
 
 function curve(p) { return (4*Math.sin(4*p))/TAU; }
 
-// 预计算粒子数据 — 扁平数组 [x0,y0,s0, x1,y1,s1, ...]
+// 预计算 60 帧平滑动画 (~22fps 实际渲染)
 let frames = [];
-let frameCount = 20;
+const frameCount = 60;
+const N_HEART = 600, N_CENTER = 3000, N_HALO_BASE = 800;
 
 function buildHeartData() {
   frames = [];
-  const N_HEART = 600;
-  const N_CENTER = 3000;
-  const N_HALO_BASE = 800;
+  const hpts = [], edgePts = [], centerPts = [];
 
-  // (1) 心形轮廓点
-  const hpts = [];
   for (let i = 0; i < N_HEART; i++) hpts.push(heartXY(Math.random()*TAU, IMAGE_ENLARGE));
-
-  // (2) 边缘扩散点
-  const edgePts = [];
   for (const [px,py] of hpts) for (let k=0;k<3;k++) edgePts.push(scatterXY(px,py,0.05));
-
-  // (3) 内部扩散点
-  const centerPts = [];
-  for (let i=0;i<N_CENTER;i++) centerPts.push(scatterXY(hpts[Math.floor(Math.random()*N_HEART)][0], hpts[Math.floor(Math.random()*N_HEART)][1], 0.27));
+  for (let i=0;i<N_CENTER;i++) {
+    const [hx,hy] = hpts[Math.floor(Math.random()*N_HEART)];
+    centerPts.push(scatterXY(hx,hy,0.27));
+  }
 
   function forceCalc(px, py, ratio, jitter) {
     const d = 1 / Math.pow((px-CX)*(px-CX)+(py-CY)*(py-CY), 0.42);
-    const dx = ratio*d*(px-CX) + Math.floor(Math.random()*jitter) - (jitter>>1);
-    const dy = ratio*d*(py-CY) + Math.floor(Math.random()*jitter) - (jitter>>1);
-    return [px-dx, py-dy];
+    const jh = jitter >> 1;
+    return [px - ratio*d*(px-CX) - (Math.floor(Math.random()*jitter)-jh),
+            py - ratio*d*(py-CY) - (Math.floor(Math.random()*jitter)-jh)];
   }
 
-  for (let f=0; f<frameCount; f++) {
-    const ratio = 15 * curve(f/10*Math.PI);
-    const haloR = Math.floor(4+6*(1+curve(f/10*Math.PI)));
-    const haloN = Math.floor(N_HALO_BASE + 1000*Math.abs(curve(f/10*Math.PI)**2));
+  for (let f = 0; f < frameCount; f++) {
+    const t = f / frameCount;
+    const ratio = 15 * curve(t * TAU);
+    const haloR = Math.floor(4 + 6*(1+curve(t*TAU)));
+    const haloN = Math.floor(N_HALO_BASE + 1000*Math.abs(curve(t*TAU)**2));
     const arr = [];
 
-    // 光晕
     const haloSet = {};
-    for (let i=0;i<haloN;i++) {
-      const t = Math.random()*TAU;
-      let [hx,hy] = heartXY(t, -15);
+    for (let i = 0; i < haloN; i++) {
+      let [hx,hy] = heartXY(Math.random()*TAU, -15);
       const ds = (hx-CX)*(hx-CX)+(hy-CY)*(hy-CY);
-      const fr = -1/Math.pow(ds,0.6);
+      const fr = -1/Math.pow(ds, 0.6);
       hx -= fr*haloR*(hx-CX); hy -= fr*haloR*(hy-CY);
       const k = Math.round(hx)+','+Math.round(hy);
       if (!haloSet[k]) { haloSet[k]=1;
         hx += Math.floor(Math.random()*121)-60;
         hy += Math.floor(Math.random()*121)-60;
-        const s = Math.random()<0.5?1:2;
-        arr.push(hx,hy,s);
+        arr.push(hx, hy, Math.random()<0.5?1:2);
       }
     }
-    // 轮廓
     for (const [px,py] of hpts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*3)+1); }
-    // 边缘
     for (const [px,py] of edgePts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
-    // 内部
     for (const [px,py] of centerPts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
 
     frames.push(arr);
   }
 }
-
-// 直接构建粒子数据
 buildHeartData();
 
-// 用 ImageData 渲染 — 零状态切换
-const HEART_COLOR = [0x7f, 0xff, 0xd4]; // aquamarine
-const FRAME_INTERVAL = 80; // ~12.5 fps, 匹配原始动画速度
+// 粉色爱心
+const HEART_R = 0xff, HEART_G = 0x44, HEART_B = 0x70; // #ff4470
 let imgData, lastFrameTime = 0;
+const FRAME_MS = 44; // ~22fps, 60帧约2.7秒一个呼吸周期
+
+function lerpFrame(fi) {
+  const f0 = frames[Math.floor(fi) % frameCount];
+  const f1 = frames[Math.ceil(fi) % frameCount];
+  const t = fi - Math.floor(fi);
+  // 只复制 f0，小幅度的帧间插值不做(肉眼看不出来)，直接跳到目标帧
+  return f0;
+}
 
 function renderHeartFrame(fi) {
   if (!frames.length) return requestAnimationFrame(()=>renderHeartFrame(fi));
 
   const now = performance.now();
-  const elapsed = now - lastFrameTime;
-  if (elapsed < FRAME_INTERVAL) {
+  if (now - lastFrameTime < FRAME_MS) {
     requestAnimationFrame(()=>renderHeartFrame(fi));
     return;
   }
-  lastFrameTime = now - (elapsed % FRAME_INTERVAL);
+  lastFrameTime = now;
 
   hCtx.clearRect(0,0,CW,CH);
 
   // 背景光晕
   hCtx.save();
-  hCtx.globalAlpha=0.06;
+  hCtx.globalAlpha = 0.07;
   const GR = Math.min(CW,CH)*0.28;
-  const gg=hCtx.createRadialGradient(CX,CY,GR*0.3,CX,CY,GR);
-  gg.addColorStop(0,'#ff4470'); gg.addColorStop(0.5,'rgba(255,60,100,0.15)'); gg.addColorStop(1,'transparent');
-  hCtx.fillStyle=gg; hCtx.fillRect(0,0,CW,CH);
+  const gg = hCtx.createRadialGradient(CX,CY,GR*0.3,CX,CY,GR);
+  gg.addColorStop(0, '#ff4470');
+  gg.addColorStop(0.5, 'rgba(255,68,112,0.18)');
+  gg.addColorStop(1, 'transparent');
+  hCtx.fillStyle = gg;
+  hCtx.fillRect(0,0,CW,CH);
   hCtx.restore();
 
-  // 粒子 — ImageData 批量写入
   const pts = frames[fi % frameCount];
   if (!pts) { requestAnimationFrame(()=>renderHeartFrame(fi)); return; }
 
   imgData = imgData || hCtx.createImageData(CW, CH);
   const buf = imgData.data;
-  // 清除上一帧
-  for (let i=3;i<buf.length;i+=4) { buf[i]=0; buf[i-1]=0; buf[i-2]=0; }
+  const len4 = CW*CH*4;
+  for (let i=3;i<len4;i+=4) { buf[i]=0; buf[i-1]=0; buf[i-2]=0; }
 
-  const [r,g,b] = HEART_COLOR;
-  const len = pts.length;
-  for (let i=0;i<len;i+=3) {
+  for (let i=0;i<pts.length;i+=3) {
     const x=pts[i]|0, y=pts[i+1]|0, s=pts[i+2]|0;
     for (let dy=0;dy<s;dy++) {
-      const row = y+dy; if (row<0||row>=CH) continue;
-      const off = row*CW*4;
+      const row=y+dy; if (row<0||row>=CH) continue;
+      const off=row*CW*4;
       for (let dx=0;dx<s;dx++) {
         const col=x+dx; if (col<0||col>=CW) continue;
         const idx=off+col*4;
-        buf[idx]=r; buf[idx+1]=g; buf[idx+2]=b; buf[idx+3]=255;
+        buf[idx]=HEART_R; buf[idx+1]=HEART_G; buf[idx+2]=HEART_B; buf[idx+3]=255;
       }
     }
   }
@@ -248,6 +241,60 @@ function renderHeartFrame(fi) {
 
   requestAnimationFrame(()=>renderHeartFrame(fi+1));
 }
+
+// ═══════════════════════════════════════════
+//  优雅粒子特效 (替代 emoji)
+// ═══════════════════════════════════════════
+
+const sparkleCanvas = document.getElementById('sparkleCanvas');
+const spCtx = sparkleCanvas.getContext('2d');
+sparkleCanvas.width = window.innerWidth;
+sparkleCanvas.height = window.innerHeight;
+
+let sparkles = [];
+
+class Sparkle {
+  constructor(x, y, color) {
+    this.x = x; this.y = y; this.vx = (Math.random()-0.5)*2;
+    this.vy = -(Math.random()*3+1.5);
+    this.color = color || ['#ff6b9d','#ffb3c6','#ffd740','#ff8c00','#c084fc','#22d3ee'][Math.floor(Math.random()*6)];
+    this.life = 1; this.decay = Math.random()*0.012+0.006;
+    this.size = Math.random()*3+1.5;
+    this.glow = Math.random()*0.6+0.4;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy; this.vy += 0.02;
+    this.life -= this.decay;
+    return this.life > 0;
+  }
+  draw(ctx) {
+    const a = Math.max(0, this.life);
+    ctx.save();
+    ctx.globalAlpha = a * this.glow;
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 8 * a;
+    ctx.shadowColor = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * a, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function emitSparkles(x, y, count, colors) {
+  for (let i=0;i<count;i++) {
+    const sp = new Sparkle(x+(Math.random()-0.5)*30, y+(Math.random()-0.5)*30);
+    if (colors) sp.color = colors[Math.floor(Math.random()*colors.length)];
+    sparkles.push(sp);
+  }
+}
+
+function animSparkles() {
+  spCtx.clearRect(0,0,sparkleCanvas.width,sparkleCanvas.height);
+  sparkles = sparkles.filter(s => { const alive=s.update(); if(alive)s.draw(spCtx); return alive; });
+  requestAnimationFrame(animSparkles);
+}
+animSparkles();
 
 // ═══════════════════════════════════════════
 //  烟花系统
@@ -278,16 +325,16 @@ class Rocket {
   draw(ctx){
     this.trail.forEach(t=>{
       ctx.save();ctx.globalAlpha=t.life*0.5;ctx.fillStyle=this.color;ctx.shadowBlur=6;ctx.shadowColor=this.color;
-      ctx.beginPath();ctx.arc(t.x,t.y,2,0,Math.PI*2);ctx.fill();ctx.restore();
+      ctx.beginPath();ctx.arc(t.x,t.y,2,0,TAU);ctx.fill();ctx.restore();
     });
     ctx.save();ctx.fillStyle='#fff';ctx.shadowBlur=14;ctx.shadowColor=this.color;
-    ctx.beginPath();ctx.arc(this.x,this.y,3.5,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.beginPath();ctx.arc(this.x,this.y,3.5,0,TAU);ctx.fill();ctx.restore();
   }
 }
 
 class Spark {
   constructor(x,y,color){
-    this.x=x;this.y=y;const a=Math.random()*Math.PI*2;const s=Math.random()*7+2;
+    this.x=x;this.y=y;const a=Math.random()*TAU;const s=Math.random()*7+2;
     this.vx=Math.cos(a)*s;this.vy=Math.sin(a)*s;
     this.color=color;this.life=1;this.decay=Math.random()*0.016+0.005;
     this.size=Math.random()*2.2+0.6;this.g=0.025;this.fr=0.987;
@@ -295,7 +342,7 @@ class Spark {
   update(){this.x+=this.vx;this.y+=this.vy;this.vy+=this.g;this.vx*=this.fr;this.vy*=this.fr;this.life-=this.decay;}
   draw(ctx){
     ctx.save();ctx.globalAlpha=Math.max(0,this.life);ctx.fillStyle=this.color;ctx.shadowBlur=5;ctx.shadowColor=this.color;
-    ctx.beginPath();ctx.arc(this.x,this.y,this.size*this.life,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.beginPath();ctx.arc(this.x,this.y,this.size*this.life,0,TAU);ctx.fill();ctx.restore();
   }
 }
 
@@ -332,25 +379,6 @@ function animFw(){
 animFw();
 
 // ═══════════════════════════════════════════
-//  爱心泡泡雨
-// ═══════════════════════════════════════════
-
-function spawnBubbles(x,y,n){
-  const t=['❤️','💖','💕','💗','💝','💘','✨','💌','🩷','💓','🌟'];
-  for(let i=0;i<n;i++){
-    const el=document.createElement('div');
-    el.style.cssText=`position:fixed;pointer-events:none;z-index:20;left:${x+(Math.random()-0.5)*40}px;top:${y+(Math.random()-0.5)*40}px;font-size:${Math.random()*2+1.2}rem;animation:bubbleFloat ${Math.random()*1+1.2}s ease-out forwards;animation-delay:${Math.random()*0.3}s;`;
-    el.textContent=t[Math.floor(Math.random()*t.length)];
-    document.body.appendChild(el);
-    el.addEventListener('animationend',()=>el.remove());
-  }
-}
-
-const bs=document.createElement('style');
-bs.textContent=`@keyframes bubbleFloat{0%{transform:translate(0,0) scale(0.15);opacity:1}40%{transform:translate(${Math.random()*160-80}px,-70px) scale(1.35);opacity:0.85}100%{transform:translate(${Math.random()*200-100}px,-180px) scale(0.35);opacity:0}}`;
-document.head.appendChild(bs);
-
-// ═══════════════════════════════════════════
 //  Toast
 // ═══════════════════════════════════════════
 
@@ -363,74 +391,32 @@ function showToast(m){
 }
 
 function showRandomMessage(){
-  const m=['在这个世界上，最幸运的事就是遇见你 💕','乖乖，你的笑容是我每天的阳光 ☀️','无论多远，我的心都和你在一起 🌍','你是我生命中最美好的意外 💝','每一天都想对你说：我爱你 ❤️','你是我的心跳，是我的唯一 💗','想和你一起慢慢变老 👵👴','乖乖是这个世界上最可爱的人 🥰','遇见你，是我这辈子最大的幸运 🍀','春风十里不如你 🌸','你就是我的全世界 🌎','和你在一起的每一秒都很甜 🍯','愿做你的守护星，永远闪亮 ⭐','陪你看遍世间所有美好 🏔️','爱你就像爱生命 📖'];
+  const m=['在这个世界上，最幸运的事就是遇见你','乖乖，你的笑容是我每天的阳光','无论多远，我的心都和你在一起','你是我生命中最美好的意外','每一天都想对你说：我爱你','你是我的心跳，是我的唯一','想和你一起慢慢变老','乖乖是这个世界上最可爱的人','遇见你，是我这辈子最大的幸运','春风十里不如你','你就是我的全世界','和你在一起的每一秒都很甜','愿做你的守护星，永远闪亮','陪你看遍世间所有美好','爱你就像爱生命'];
   showToast(m[Math.floor(Math.random()*m.length)]);
-  spawnBubbles(window.innerWidth/2,window.innerHeight*0.45,12);
 }
 
 // ═══════════════════════════════════════════
-//  音乐 - A Thousand Years
+//  音乐 - MP3 播放 (需将 a-thousand-years.mp3 放到同目录)
 // ═══════════════════════════════════════════
 
-let audioCtx=null,musicPlaying=false,musicTimer=null;
+const bgm = document.getElementById('bgm');
+let musicPlaying = false;
 
-function toggleMusic(){
-  if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return}}
-  if(musicPlaying){clearTimeout(musicTimer);musicPlaying=false;document.getElementById('btnMusic').textContent='🎵 A Thousand Years';showToast('音乐已暂停');return}
-  musicPlaying=true;document.getElementById('btnMusic').textContent='🎵 暂停';showToast('A Thousand Years ♪');
-
-  const melody=[
-    // Verse "Heart beats fast"
-    294,349,392,440,466,440,392,349,
-    294,349,392,440,466,440,392,349,
-    262,311,349,392,440,392,349,311,
-    262,311,349,392,440,392,349,311,
-    // Chorus
-    233,294,349,233,294,349,
-    233,262,311,233,262,311,
-    233,294,349,392,349,311,294,262,233,
-    294,349,392,349,294,262,233
-  ];
-  const bass=[117,87,98,78,117,87,98,78,117,87,98,78,117,87,98,78];
-  const chordRoots=[117,87,98,78,117,87,98,78,117,87,98,78,117,87,98,78];
-  const chordIntervals=[4,4,3,4,4,4,3,4,4,4,3,4,4,4,3,4];
-  const noteLen=0.42;let idx=0;
-
-  function playChord(root,interval){
-    [root,root*Math.pow(2,interval/12),root*Math.pow(2,7/12)].forEach((f,j)=>{
-      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-      o.type=j===0?'triangle':'sine';o.frequency.value=f;
-      g.gain.setValueAtTime(j===0?0.07:0.04,audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+noteLen*0.8);
-      o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+noteLen*0.8);
+function toggleMusic() {
+  if (musicPlaying) {
+    bgm.pause();
+    musicPlaying = false;
+    document.getElementById('btnMusic').textContent = '🎵 A Thousand Years';
+    showToast('音乐已暂停');
+  } else {
+    bgm.play().then(() => {
+      musicPlaying = true;
+      document.getElementById('btnMusic').textContent = '🎵 暂停';
+      showToast('A Thousand Years ♪');
+    }).catch(() => {
+      showToast('请将 a-thousand-years.mp3 放在网页同目录下');
     });
   }
-
-  function pn(){
-    if(!musicPlaying||!audioCtx)return;
-    const mi=idx%melody.length;
-    const o1=audioCtx.createOscillator(),g1=audioCtx.createGain();
-    o1.type='sine';o1.frequency.value=melody[mi];
-    g1.gain.setValueAtTime(0.11,audioCtx.currentTime);
-    g1.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+noteLen*0.85);
-    o1.connect(g1);g1.connect(audioCtx.destination);o1.start();o1.stop(audioCtx.currentTime+noteLen*0.85);
-    const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();
-    o2.type='sine';o2.frequency.value=melody[mi]*2;
-    g2.gain.setValueAtTime(0.025,audioCtx.currentTime);
-    g2.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+noteLen*0.65);
-    o2.connect(g2);g2.connect(audioCtx.destination);o2.start();o2.stop(audioCtx.currentTime+noteLen*0.65);
-    if(mi%4===0) playChord(chordRoots[Math.floor(mi/4)%chordRoots.length], chordIntervals[Math.floor(mi/4)%16]);
-    if(mi%2===0){
-      const ob=audioCtx.createOscillator(),gb=audioCtx.createGain();
-      ob.type='triangle';ob.frequency.value=bass[Math.floor(mi/2)%bass.length];
-      gb.gain.setValueAtTime(0.06,audioCtx.currentTime);
-      gb.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+noteLen*1.5);
-      ob.connect(gb);gb.connect(audioCtx.destination);ob.start();ob.stop(audioCtx.currentTime+noteLen*1.5);
-    }
-    idx++;
-    musicTimer=setTimeout(pn,noteLen*1000);
-  }
-  pn();
 }
 
 // ═══════════════════════════════════════════
@@ -438,33 +424,35 @@ function toggleMusic(){
 // ═══════════════════════════════════════════
 
 heartCanvas.addEventListener('click', (e) => {
-  spawnBubbles(e.clientX, e.clientY, 15);
+  emitSparkles(e.clientX, e.clientY, 18, ['#ff6b9d','#ff4470','#ffb3c6','#ffd740']);
   launchFireworks(3);
-  const msgs = ['乖乖最好啦~ 🥰','好爱好爱你 💕','为你心动 💗','爱的抱抱 🤗','亲一个 😘'];
+  const msgs = ['乖乖最好啦~','好爱好爱你','为你心动','爱的抱抱','亲一个'];
   showToast(msgs[Math.floor(Math.random()*msgs.length)]);
 });
 
 heartCanvas.addEventListener('dblclick', (e) => {
   e.preventDefault();
   launchFireworks(10);
-  spawnBubbles(e.clientX, e.clientY, 25);
-  showToast('满满的爱都给你 💖');
+  emitSparkles(e.clientX, e.clientY, 40, ['#ff6b9d','#ff4470','#ffd740','#c084fc','#22d3ee']);
+  showToast('满满的爱都给你');
 });
 
 // ═══════════════════════════════════════════
 //  按钮绑定
 // ═══════════════════════════════════════════
 
-document.getElementById('btnFirework').addEventListener('click',()=>{launchFireworks(12);showToast('为你绽放最美的烟花 🎆')});
+document.getElementById('btnFirework').addEventListener('click',()=>{
+  launchFireworks(12);showToast('为你绽放最美的烟花');
+});
 document.getElementById('btnBubble').addEventListener('click',()=>{
   const cx=window.innerWidth/2,cy=window.innerHeight*0.42;
-  for(let i=0;i<8;i++) setTimeout(()=>spawnBubbles(cx+(Math.random()-0.5)*220,cy+(Math.random()-0.5)*160,10),i*100);
-  showToast('爱你一万遍 💖');
+  for(let i=0;i<8;i++) setTimeout(()=>emitSparkles(cx+(Math.random()-0.5)*220,cy+(Math.random()-0.5)*160,10,['#ff6b9d','#ffb3c6','#ff4470']),i*100);
+  showToast('爱你一万遍');
 });
 document.getElementById('btnStar').addEventListener('click',()=>{
   launchFireworks(6);
-  for(let i=0;i<40;i++) setTimeout(()=>spawnBubbles(Math.random()*window.innerWidth*0.8+window.innerWidth*0.1,Math.random()*window.innerHeight*0.35+window.innerHeight*0.05,4),i*35);
-  showToast('满天繁星，不如你眼睛里的光 ✨');
+  for(let i=0;i<40;i++) setTimeout(()=>emitSparkles(Math.random()*innerWidth*0.8+innerWidth*0.1,Math.random()*innerHeight*0.35+innerHeight*0.05,4,['#ffd740','#c084fc','#22d3ee']),i*35);
+  showToast('满天繁星，不如你眼睛里的光');
 });
 document.getElementById('btnMessage').addEventListener('click',showRandomMessage);
 document.getElementById('btnMusic').addEventListener('click',toggleMusic);
@@ -472,8 +460,8 @@ document.getElementById('btnMusic').addEventListener('click',toggleMusic);
 // 键盘
 window.addEventListener('keydown',e=>{
   switch(e.key.toLowerCase()){
-    case'f':launchFireworks(10);showToast('🎆 为你绽放！');break;
-    case'b':spawnBubbles(window.innerWidth/2,window.innerHeight/2,25);showToast('💖 爱心雨！');break;
+    case'f':launchFireworks(10);showToast('为你绽放！');break;
+    case'b':emitSparkles(innerWidth/2,innerHeight/2,30,['#ff6b9d','#ff4470','#ffb3c6']);showToast('爱心雨！');break;
     case'm':showRandomMessage();break;
   }
 });
@@ -482,14 +470,15 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('resize', () => {
   resizeHeartCanvas();
   resizeFw();
-  // 重建爱心数据因为尺寸变了
+  sparkleCanvas.width = window.innerWidth;
+  sparkleCanvas.height = window.innerHeight;
   buildHeartData();
 });
 
 // 启动爱心动画
 renderHeartFrame(0);
 
-// 欢迎
+// 欢迎烟花
 setTimeout(()=>launchFireworks(4), 800);
 </script>
 </body>
