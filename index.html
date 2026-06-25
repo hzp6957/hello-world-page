@@ -90,11 +90,6 @@ body {
   <div class="toast" id="toast">点击爱心有惊喜 · 按F放烟花</div>
 </div>
 
-<!-- 音乐播放器 -->
-<audio id="bgm" preload="auto" loop style="display:none">
-  <source src="a-thousand-years.mp3" type="audio/mpeg">
-</audio>
-
 <script>
 // ═══════════════════════════════════════════
 //  爱心粒子动画
@@ -396,27 +391,112 @@ function showRandomMessage(){
 }
 
 // ═══════════════════════════════════════════
-//  音乐 - MP3 播放 (需将 a-thousand-years.mp3 放到同目录)
-// ═══════════════════════════════════════════
+//  音乐 — A Thousand Years (Web Audio合成)
+//  ═══════════════════════════════════════════
 
-const bgm = document.getElementById('bgm');
-let musicPlaying = false;
+let audioCtx=null,musicPlaying=false,musicStopped=false,gainNode=null;
 
-function toggleMusic() {
-  if (musicPlaying) {
-    bgm.pause();
-    musicPlaying = false;
-    document.getElementById('btnMusic').textContent = '🎵 A Thousand Years';
+function toggleMusic(){
+  if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return}}
+
+  if(musicPlaying){
+    musicStopped=true;musicPlaying=false;
+    document.getElementById('btnMusic').textContent='🎵 A Thousand Years';
+    if(gainNode) gainNode.gain.setValueAtTime(0,audioCtx.currentTime);
     showToast('音乐已暂停');
-  } else {
-    bgm.play().then(() => {
-      musicPlaying = true;
-      document.getElementById('btnMusic').textContent = '🎵 暂停';
-      showToast('A Thousand Years ♪');
-    }).catch(() => {
-      showToast('请将 a-thousand-years.mp3 放在网页同目录下');
+    return;
+  }
+
+  musicStopped=false;musicPlaying=true;
+  document.getElementById('btnMusic').textContent='🎵 暂停';
+  showToast('A Thousand Years ♪');
+
+  const melodyNotes=[233,0,349,392,440,466,440,392,349,233,0,349,392,440,466,440,392,349,208,0,311,349,392,466,392,349,311,208,0,311,349,392,466,392,349,311,196,0,233,294,0,196,0,233,294,0,175,0,220,262,0,175,0,220,262,0,156,0,196,233,262,233,196,175,156,147,196,0,233,294,0,262,233,196,175,156];
+  const rhythm=[0.75,0.25,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.75,0.25,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.75,0.25,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.75,0.25,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.5,0.5,1,1,0,1.5,0.5,1,1,0,1.5,0.5,1,1,0,1.5,0.5,1,1,0,1,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.5,0.5,1,1,0,0.5,0.5,0.5,0.5,1.5];
+  const bassNotes=[233,0,0,0,233,0,0,0,208,0,0,0,208,0,0,0,196,0,0,0,196,0,0,0,175,0,0,0,175,0,0,0,156,0,0,0,196,0,0,0,196,0,0,0,156,0,0,0,175,0,0,0];
+  const chordRoots=[233,0,0,0,208,0,0,0,196,0,0,0,175,0,0,0,156,0,0,0,196,0,0,0,156,0,0,0,175,0,0,0];
+  const baseNote=0.33;
+  let idx=0,schedTime=0;
+
+  gainNode=audioCtx.createGain();
+  gainNode.gain.setValueAtTime(0,audioCtx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.12,audioCtx.currentTime+0.1);
+  gainNode.connect(audioCtx.destination);
+
+  function note(freq,start,dur,type,vol){
+    if(!freq)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=type;o.frequency.value=freq;
+    const a=Math.max(0.02,vol*0.14);
+    g.gain.setValueAtTime(0,start);
+    g.gain.linearRampToValueAtTime(a,start+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,start+dur);
+    o.connect(g);g.connect(gainNode);
+    o.start(start);o.stop(start+dur);
+  }
+
+  function noteSoft(freq,start,dur){
+    if(!freq)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,start);
+    g.gain.linearRampToValueAtTime(0.025,start+0.03);
+    g.gain.exponentialRampToValueAtTime(0.001,start+dur);
+    o.connect(g);g.connect(gainNode);
+    o.start(start);o.stop(start+dur);
+  }
+
+  function playChord(root,start,dur){
+    if(!root)return;
+    [1,Math.pow(2,4/12),Math.pow(2,7/12)].forEach((r,j)=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type=j===0?'triangle':'sine';o.frequency.value=root*r;
+      g.gain.setValueAtTime(0,start);
+      g.gain.linearRampToValueAtTime(j===0?0.05:0.025,start+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,start+dur*0.75);
+      o.connect(g);g.connect(gainNode);
+      o.start(start);o.stop(start+dur*0.75);
     });
   }
+
+  function playBass(freq,start,dur){
+    if(!freq)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='triangle';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,start);
+    g.gain.linearRampToValueAtTime(0.045,start+0.03);
+    g.gain.exponentialRampToValueAtTime(0.001,start+dur*1.3);
+    o.connect(g);g.connect(gainNode);
+    o.start(start);o.stop(start+dur*1.3);
+  }
+
+  function scheduleLoop(){
+    if(!musicPlaying||musicStopped)return;
+    const now=audioCtx.currentTime;
+    if(schedTime<now)schedTime=now;
+
+    const perTick=8;
+    for(let k=0;k<perTick&&idx<melodyNotes.length;k++){
+      const m=melodyNotes[idx],d=rhythm[idx]*baseNote;
+      note(m,schedTime+0.003,d,'sine',1);
+      if(m) noteSoft(m*Math.pow(2,3/12),schedTime+0.01,d*0.7);
+      if(idx%4===0){
+        const cr=chordRoots[Math.floor(idx/4)%chordRoots.length];
+        playChord(cr,schedTime,d*4);
+        const bn=bassNotes[Math.floor(idx/2)%bassNotes.length];
+        playBass(bn,schedTime,d*4);
+      }
+      schedTime+=d;
+      idx++;
+      if(idx>=melodyNotes.length) idx=0;
+    }
+    const next=Math.max(0,schedTime-now-0.1);
+    setTimeout(scheduleLoop,Math.max(30,next*1000));
+  }
+
+  schedTime=audioCtx.currentTime+0.05;
+  idx=0;
+  scheduleLoop();
 }
 
 // ═══════════════════════════════════════════
