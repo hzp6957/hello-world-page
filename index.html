@@ -68,6 +68,25 @@ body {
 
 #fwCanvas { position:fixed;inset:0;z-index:5;pointer-events:none; }
 
+/* 情书浮现层 */
+.letter-overlay {
+  position:fixed;inset:0;z-index:3;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:clamp(20px,5vh,50px) 24px;gap:clamp(6px,1.8vh,14px);
+}
+.letter-line {
+  font-size:clamp(0.92rem, 2.2vw, 1.15rem);
+  color:rgba(255,255,255,0);
+  text-align:center;line-height:2;letter-spacing:0.05em;
+  font-weight:500;transition:color 1.2s ease,text-shadow 1.2s ease;
+  max-width:660px;
+  text-shadow:0 0 16px rgba(255,107,157,0);
+}
+.letter-line.show {
+  color:rgba(255,255,255,0.88);
+  text-shadow:0 0 20px rgba(255,107,157,0.25);
+}
+
 @media (max-width:480px) { .btn{padding:9px 16px;font-size:0.78rem}.btn-row{gap:6px} }
 </style>
 </head>
@@ -87,7 +106,10 @@ body {
 <canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
 
-<div class="header"><div class="title">乖乖我爱你</div></div>
+<!-- 情书浮现层 -->
+<div class="letter-overlay" id="letterOverlay"></div>
+
+<div class="header"><div class="title" style="display:none"></div></div>
 
 <div class="footer">
   <div class="btn-row">
@@ -180,6 +202,72 @@ gateYes.addEventListener('mouseenter', () => {
 });
 gateYes.addEventListener('mouseleave', () => {
   if (!gatePassed) gateYes.style.transform = 'scale(1)';
+});
+
+// ═══════════════════════════════════════════
+//  情书逐句浮现
+// ═══════════════════════════════════════════
+
+const letterText = `没想到我会用这种方式回信吧，看到你的来信我真的开心了很久。
+原来我以为自己写得已经够笨拙了，但看来你也是大哥二哥。
+看着你的信想起我们第一次见面、一起去公园、电玩城、看电影，还有你说我主动、细心、耐心的时候，我一边看一边傻笑，感觉自己被你很认真地放在心上。
+你说自己不自信，说怕我会失望，其实我想告诉你，在我这里你真的很好。
+不是因为滤镜，也不是因为恋爱脑，而是你本来就真诚、可爱、温柔，又有很多自己可能没发现的闪光点。
+你不用总担心自己哪里不够好，我喜欢的是完整的你，包括你的害羞、敏感、小别扭，还有你慢慢靠近我的样子。
+只要是你站在我的面前，你就已经是全世界了。
+我们都要珍惜当下，好好感受彼此，勇敢一点，也温柔一点。
+以后我们当然还会有不安、有笨拙、有说不出口的时候，但没关系，我们可以慢慢学，慢慢说，慢慢走。
+我会更认真地爱你，也会努力让你在我这里一直安心。
+谢谢你出现在我的世界里。
+我的小乖，我也想和你一直走下去。`;
+
+const lines = letterText.trim().split('\n').filter(l => l.trim());
+const letterOverlay = document.getElementById('letterOverlay');
+let letterTimer = null;
+
+function startLetter() {
+  // 清空旧内容
+  letterOverlay.innerHTML = '';
+
+  // 创建所有行的 DOM 元素
+  const lineEls = lines.map((text, i) => {
+    const el = document.createElement('div');
+    el.className = 'letter-line';
+    el.textContent = text;
+    letterOverlay.appendChild(el);
+    return el;
+  });
+
+  const msPerLine = 5200; // 每句 5.2 秒，均匀慢速
+  let idx = 0;
+
+  function revealNext() {
+    if (idx >= lineEls.length) {
+      // 全部显示完毕，再保留一会
+      letterTimer = null;
+      return;
+    }
+    lineEls[idx].classList.add('show');
+    idx++;
+    if (idx < lineEls.length) {
+      letterTimer = setTimeout(revealNext, msPerLine);
+    } else {
+      // 最后一句显示后多停留一会
+      letterTimer = setTimeout(() => { letterTimer = null; }, msPerLine + 3000);
+    }
+  }
+
+  // 延迟 1.5 秒开始，让用户先看到爱心
+  letterTimer = setTimeout(revealNext, 1500);
+}
+
+// 入场通过后启动情书
+const origGateYes = gateYes.onclick;
+gateYes.addEventListener('click', () => {
+  // 等入场动画结束后启动情书
+  setTimeout(() => {
+    if (gatePassed) startLetter();
+  }, 1600);
 });
 
 // ═══════════════════════════════════════════
