@@ -196,10 +196,19 @@ buildHeartData();
 
 // 用 ImageData 渲染 — 零状态切换
 const HEART_COLOR = [0x7f, 0xff, 0xd4]; // aquamarine
-let imgData;
+const FRAME_INTERVAL = 80; // ~12.5 fps, 匹配原始动画速度
+let imgData, lastFrameTime = 0;
 
 function renderHeartFrame(fi) {
   if (!frames.length) return requestAnimationFrame(()=>renderHeartFrame(fi));
+
+  const now = performance.now();
+  const elapsed = now - lastFrameTime;
+  if (elapsed < FRAME_INTERVAL) {
+    requestAnimationFrame(()=>renderHeartFrame(fi));
+    return;
+  }
+  lastFrameTime = now - (elapsed % FRAME_INTERVAL);
 
   hCtx.clearRect(0,0,CW,CH);
 
