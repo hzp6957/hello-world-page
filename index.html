@@ -19,20 +19,7 @@ body {
 
 #heartCanvas { position:fixed;inset:0;z-index:0; }
 #sparkleCanvas { position:fixed;inset:0;z-index:2;pointer-events:none; }
-
-.header {
-  position:fixed;top:0;left:0;right:0;z-index:10;
-  padding:clamp(14px,3vh,28px) 24px;display:flex;justify-content:center;
-  pointer-events:none;
-}
-.title {
-  font-size:clamp(1.5rem,5vw,3rem);font-weight:800;letter-spacing:0.1em;
-  background:linear-gradient(135deg,#ff6b9d,#ff2d6a,#ff6b9d,#ffb3c6);
-  background-size:300% 100%;
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  animation:titleShine 4s ease-in-out infinite;line-height:1.3;
-}
-@keyframes titleShine { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+#fwCanvas { position:fixed;inset:0;z-index:5;pointer-events:none; }
 
 .footer {
   position:fixed;bottom:clamp(10px,3vh,34px);left:0;right:0;z-index:10;
@@ -66,100 +53,127 @@ body {
 }
 .toast--hidden{opacity:0;transform:translateY(8px)}
 
-#fwCanvas { position:fixed;inset:0;z-index:5;pointer-events:none; }
-
-/* 情书浮现层 */
-.letter-overlay {
-  position:fixed;inset:0;z-index:3;pointer-events:auto;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
-  scroll-behavior:smooth;
-  display:flex;flex-direction:column;align-items:center;
-  padding:clamp(30px,6vh,60px) 24px clamp(30px,6vh,80px);gap:clamp(10px,2.2vh,18px);
-  mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 85%,transparent 100%);
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 85%,transparent 100%);
+/* 纪念日 + 生日倒计时容器 */
+.side-panel {
+  position:fixed;top:clamp(10px,3vh,20px);z-index:11;
+  display:flex;flex-direction:column;gap:clamp(8px,1.5vh,14px);
+  pointer-events:none;
 }
-.letter-line {
-  font-size:clamp(1rem, 2.6vw, 1.2rem);
-  color:rgba(255,255,255,0);
-  text-align:center;line-height:2;letter-spacing:0.05em;
-  font-weight:500;transition:color 1.4s ease,text-shadow 1.4s ease;
-  max-width:640px;flex-shrink:0;
-  text-shadow:0 0 16px rgba(255,107,157,0);
-}
-.letter-line.show {
-  color:rgba(255,255,255,0.88);
-  text-shadow:0 0 22px rgba(255,107,157,0.3);
-}
-/* 占位区：让第一行也能滚动到中间 */
-.letter-spacer { flex:0 0 clamp(15vh,20vh,30vh); }
-.letter-bottom { flex:0 0 clamp(10vh,15vh,25vh); }
+.side-panel.right { right:clamp(10px,3vw,24px); }
+.side-panel.left { left:clamp(10px,3vw,24px); }
 
 /* 纪念日计数器 */
 .anniversary {
-  position:fixed;top:clamp(10px,3vh,26px);right:clamp(10px,3vw,28px);z-index:11;
-  display:flex;flex-direction:column;align-items:center;gap:2px;
+  display:flex;flex-direction:column;align-items:center;gap:1px;
   padding:clamp(8px,1.5vh,14px) clamp(14px,3vw,22px);
   border-radius:18px;
   background:rgba(255,68,112,0.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(255,107,157,0.15);
-  opacity:0;transform:translateY(-12px);
-  transition:opacity 1s ease,transform 1s ease;
-  pointer-events:none;
+  opacity:1;
 }
-.anniversary.show { opacity:1;transform:translateY(0); }
 .anniversary-label {
-  font-size:clamp(0.62rem,1.3vw,0.72rem);
-  color:rgba(255,255,255,0.5);letter-spacing:0.08em;font-weight:400;
+  font-size:clamp(0.58rem,1.2vw,0.68rem);
+  color:rgba(255,255,255,0.45);letter-spacing:0.06em;font-weight:400;
 }
 .anniversary-days {
-  font-size:clamp(1.4rem,4vw,2rem);
+  font-size:clamp(1.3rem,3.6vw,1.8rem);
   font-weight:800;letter-spacing:0.04em;
   background:linear-gradient(180deg,#ffb3c6,#ff6b9d);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   line-height:1.1;
 }
 .anniversary-unit {
-  font-size:clamp(0.6rem,1.2vw,0.68rem);
-  color:rgba(255,255,255,0.4);letter-spacing:0.06em;
+  font-size:clamp(0.55rem,1.1vw,0.62rem);
+  color:rgba(255,255,255,0.35);letter-spacing:0.04em;
 }
 .anniversary-date {
-  margin-top:2px;font-size:clamp(0.55rem,1vw,0.62rem);
-  color:rgba(255,255,255,0.25);letter-spacing:0.04em;
+  margin-top:1px;font-size:clamp(0.5rem,0.9vw,0.58rem);
+  color:rgba(255,255,255,0.22);letter-spacing:0.03em;
+}
+
+/* 生日倒计时卡片 */
+.birthday-card {
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:clamp(8px,1.5vh,12px) clamp(12px,2.5vw,18px);
+  border-radius:16px;
+  background:rgba(255,255,255,0.04);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.birthday-card.girl { border-color:rgba(255,107,157,0.2);background:rgba(255,107,157,0.06); }
+.birthday-card.boy { border-color:rgba(100,180,255,0.2);background:rgba(100,180,255,0.05); }
+
+.birthday-name {
+  font-size:clamp(0.65rem,1.3vw,0.75rem);
+  font-weight:700;letter-spacing:0.06em;
+}
+.birthday-card.girl .birthday-name { color:#ffb3c6; }
+.birthday-card.boy .birthday-name { color:#a0d0ff; }
+
+.birthday-countdown {
+  display:flex;align-items:baseline;gap:2px;
+}
+.birthday-days {
+  font-size:clamp(1.2rem,3.2vw,1.6rem);
+  font-weight:800;letter-spacing:0.03em;line-height:1.1;
+}
+.birthday-card.girl .birthday-days {
+  background:linear-gradient(180deg,#ffb3c6,#ff6b9d);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.birthday-card.boy .birthday-days {
+  background:linear-gradient(180deg,#c0e0ff,#5090e0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.birthday-note {
+  font-size:clamp(0.55rem,1vw,0.6rem);
+  color:rgba(255,255,255,0.5);letter-spacing:0.03em;
+}
+.birthday-lunar {
+  font-size:clamp(0.5rem,0.9vw,0.56rem);
+  color:rgba(255,255,255,0.25);letter-spacing:0.03em;
 }
 
 @media (max-width:480px) {
   .btn{padding:9px 16px;font-size:0.78rem}.btn-row{gap:6px}
-  .anniversary{top:auto;bottom:clamp(80px,16vh,120px);right:clamp(6px,2vw,16px)}
+  .side-panel.right{top:auto;bottom:clamp(80px,16vh,110px);right:clamp(4px,2vw,12px)}
+  .side-panel.left{top:auto;bottom:clamp(80px,16vh,110px);left:clamp(4px,2vw,12px)}
 }
 </style>
 </head>
 <body>
 
-<!-- 入场提问遮罩 -->
-<div id="gate" style="position:fixed;inset:0;z-index:999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;">
-  <div id="gateQuestion" style="font-size:clamp(2rem,7vw,4rem);font-weight:800;color:#ff6b9d;text-shadow:0 0 40px rgba(255,107,157,0.5);letter-spacing:0.06em;transition:all 0.4s;">你爱我吗？</div>
-  <div style="display:flex;gap:24px;position:relative;">
-    <button id="gateYes" style="padding:14px 48px;font-size:clamp(1rem,3vw,1.4rem);font-weight:700;border:2px solid rgba(255,107,157,0.5);border-radius:50px;background:rgba(255,107,157,0.25);color:#ffb3c6;cursor:pointer;letter-spacing:0.06em;transition:all 0.3s;">是 💕</button>
-    <button id="gateNo" style="padding:14px 48px;font-size:clamp(1rem,3vw,1.4rem);font-weight:700;border:2px solid rgba(255,255,255,0.2);border-radius:50px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);cursor:pointer;letter-spacing:0.06em;transition:all 0.15s;position:relative;">否</button>
-  </div>
-  <div id="gateHint" style="min-height:28px;font-size:0.9rem;color:rgba(255,255,255,0.4);letter-spacing:0.04em;"></div>
-</div>
-
 <canvas id="heartCanvas"></canvas>
 <canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
 
-<!-- 情书浮现层 -->
-<div class="letter-overlay" id="letterOverlay"></div>
+<!-- 右侧：恋爱纪念日 -->
+<div class="side-panel right">
+  <div class="anniversary" id="anniversaryEl">
+    <div class="anniversary-label">恋爱纪念日</div>
+    <div class="anniversary-days" id="anniversaryDays">--</div>
+    <div class="anniversary-unit">天</div>
+    <div class="anniversary-date" id="anniversaryDate"></div>
+  </div>
+</div>
 
-<div class="header"><div class="title" style="display:none"></div></div>
-
-<!-- 恋爱纪念日计数器 -->
-<div class="anniversary" id="anniversaryEl">
-  <div class="anniversary-label">恋 爱 纪 念 日</div>
-  <div class="anniversary-days" id="anniversaryDays">--</div>
-  <div class="anniversary-unit">天</div>
-  <div class="anniversary-date" id="anniversaryDate"></div>
+<!-- 左侧：生日倒计时 -->
+<div class="side-panel left">
+  <div class="birthday-card girl">
+    <div class="birthday-name">乖乖 生日</div>
+    <div class="birthday-countdown">
+      <span class="birthday-days" id="girlDays">--</span>
+    </div>
+    <div class="birthday-note" id="girlNote"></div>
+    <div class="birthday-lunar">农历正月初二</div>
+  </div>
+  <div class="birthday-card boy">
+    <div class="birthday-name">小乖 生日</div>
+    <div class="birthday-countdown">
+      <span class="birthday-days" id="boyDays">--</span>
+    </div>
+    <div class="birthday-note" id="boyNote"></div>
+    <div class="birthday-lunar">农历三月廿一</div>
+  </div>
 </div>
 
 <div class="footer">
@@ -179,231 +193,214 @@ body {
 
 <script>
 // ═══════════════════════════════════════════
-//  入场提问
+//  农历日历引擎
 // ═══════════════════════════════════════════
 
-const gateEl = document.getElementById('gate');
-const gateYes = document.getElementById('gateYes');
-const gateNo = document.getElementById('gateNo');
-const gateQuestion = document.getElementById('gateQuestion');
-const gateHint = document.getElementById('gateHint');
-let gatePassed = false;
-
-const rejectMessages = [
-  '不行哦，再想想~', '真的吗？再给你一次机会', '我不信，重来！',
-  '别这样嘛，重新选好不好', '你怎么忍心说出口...', '哼，我不接受！',
-  '快选"是"啦~', '不可能！重新选！', '再试一次，我会等你的',
-  '这不是正确答案哦', '哈哈，我知道你手滑了', '求求你了，选"是"吧'
+// 农历数据 1900-2100，每项4字节编码12/13个月的大小月
+// bit 0-11: 每月天数 (1=30天, 0=29天)
+// bit 12-15: 闰月 (0=无闰月)
+const LUNAR_INFO = [
+  0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+  0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+  0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+  0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+  0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+  0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+  0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+  0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+  0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+  0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,
+  0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+  0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+  0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+  0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+  0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+  0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06aa0,0x1a6c4,0x0aae0,
+  0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+  0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+  0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+  0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252,
+  0x0d520
 ];
 
-let noClickCount = 0;
+const LUNAR_BASE_YEAR = 1900;
+const LUNAR_DAYS_1900_01_31 = 0; // 农历1900年正月初一 = 公历1900-01-31
 
-gateYes.addEventListener('click', () => {
-  if (gatePassed) return;
-  gatePassed = true;
-  gateQuestion.textContent = '我就知道 💕';
-  gateQuestion.style.transform = 'scale(1.1)';
-  gateHint.textContent = '';
-  gateHint.style.opacity = '0';
-  gateNo.style.display = 'none';
-  gateYes.textContent = '🥰 爱你';
-
-  setTimeout(() => {
-    gateEl.style.opacity = '0';
-    gateEl.style.pointerEvents = 'none';
-    gateEl.style.transition = 'opacity 0.8s';
-
-    // 启动纪念日计数器
-	    onGatePassed();
-
-	    // 播放音乐
-    bgm.play().then(() => {
-      musicPlaying = true;
-      document.getElementById('btnMusic').textContent = '🎵 暂停';
-    }).catch(() => {});
-
-    // 欢迎烟花
-    setTimeout(() => launchFireworks(6), 400);
-  }, 600);
-});
-
-gateNo.addEventListener('click', () => {
-  if (gatePassed) return;
-  noClickCount++;
-  const msg = rejectMessages[Math.floor(Math.random() * rejectMessages.length)];
-  gateHint.textContent = msg;
-  gateHint.style.color = '#ff6b9d';
-  gateHint.style.opacity = '1';
-
-  // "否"按钮逃跑 — 每次点就跳到新位置
-  const dx = (Math.random() * 260 - 130);
-  const dy = (Math.random() * 120 - 60);
-  gateNo.style.position = 'relative';
-  gateNo.style.left = dx + 'px';
-  gateNo.style.top = dy + 'px';
-
-  // 如果连续拒绝多次，"是"按钮变大
-  if (noClickCount >= 3) {
-    const scale = 1 + noClickCount * 0.15;
-    gateYes.style.transform = `scale(${scale})`;
-    gateYes.style.fontSize = `clamp(1rem, 3vw, ${1.4 + noClickCount * 0.1}rem)`;
-    gateYes.style.padding = `${14 + noClickCount * 2}px ${48 + noClickCount * 6}px`;
-  }
-});
-
-gateYes.addEventListener('mouseenter', () => {
-  if (!gatePassed) gateYes.style.transform = 'scale(1.08)';
-});
-gateYes.addEventListener('mouseleave', () => {
-  if (!gatePassed) gateYes.style.transform = 'scale(1)';
-});
-
-// ═══════════════════════════════════════════
-//  恋爱纪念日计数器 (联网自动更新)
-// ═══════════════════════════════════════════
-
-const ANNIVERSARY_DATE = new Date(2026, 4, 10); // 2026年5月10日，月份从0开始
-
-function updateAnniversary() {
-  const now = new Date();
-  const diffMs = now.getTime() - ANNIVERSARY_DATE.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  // 5月10日当天为第1天
-  const dayNumber = diffDays >= 0 ? diffDays + 1 : 0;
-
-  const el = document.getElementById('anniversaryEl');
-  const daysEl = document.getElementById('anniversaryDays');
-  const dateEl = document.getElementById('anniversaryDate');
-
-  // 入场后显示
-  if (gatePassed && dayNumber > 0) {
-    el.classList.add('show');
-  }
-
-  // 数字动画
-  if (dayNumber > 0) {
-    animateNumber(daysEl, dayNumber);
-  } else {
-    daysEl.textContent = '--';
-  }
-
-  const y = ANNIVERSARY_DATE.getFullYear();
-  const m = String(ANNIVERSARY_DATE.getMonth() + 1).padStart(2,'0');
-  const d = String(ANNIVERSARY_DATE.getDate()).padStart(2,'0');
-  dateEl.textContent = `${y}.${m}.${d} 起`;
+// 公历日期转距1970-01-01的天数
+function gregToDays(y, m, d) {
+  // 使用 Date 直接计算
+  return Math.floor(new Date(y, m-1, d).getTime() / 86400000);
 }
 
-let animFrameId = null;
-function animateNumber(el, target) {
-  const current = parseInt(el.textContent, 10) || 0;
-  if (current === target) return;
-  if (animFrameId) cancelAnimationFrame(animFrameId);
+// 计算某年的农历月份数(含闰月)
+function lunarYearMonths(year) {
+  const info = LUNAR_INFO[year - LUNAR_BASE_YEAR];
+  const leap = (info >> 12) & 0xf;
+  return leap ? 13 : 12;
+}
 
-  const start = performance.now();
-  const duration = 800;
-  const from = current;
-
-  function step(ts) {
-    const elapsed = ts - start;
-    const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-    el.textContent = Math.round(from + (target - from) * eased);
-    if (progress < 1) {
-      animFrameId = requestAnimationFrame(step);
-    } else {
-      animFrameId = null;
+// 计算农历年从正月初一到下一年正月初一前的天数
+function lunarYearDays(year) {
+  let sum = 0;
+  const months = lunarYearMonths(year);
+  const info = LUNAR_INFO[year - LUNAR_BASE_YEAR];
+  const leapMonth = (info >> 12) & 0xf;
+  for (let m = 1; m <= months; m++) {
+    if (leapMonth && m === leapMonth + 1) {
+      // 闰月
+      const leapDays = (info >> 16) & 0x1 ? 30 : 29;
+      sum += leapDays;
     }
+    const bitIdx = m - (leapMonth && m > leapMonth ? 2 : 1);
+    const days = (info >> bitIdx) & 0x1 ? 30 : 29;
+    sum += days;
   }
-  animFrameId = requestAnimationFrame(step);
+  return sum;
 }
 
-// 入场时更新
-function onGatePassed() {
-  updateAnniversary();
-
-  // 每天午夜自动刷新
-  const now = new Date();
-  const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
-  setTimeout(() => {
-    updateAnniversary();
-    // 之后每24小时更新一次
-    setInterval(updateAnniversary, 24 * 60 * 60 * 1000);
-  }, msToMidnight + 1000);
+// 获取闰月(0=无)
+function leapMonthOf(year) {
+  return (LUNAR_INFO[year - LUNAR_BASE_YEAR] >> 12) & 0xf;
 }
 
-// ═══════════════════════════════════════════
-//  情书逐句浮现
-// ═══════════════════════════════════════════
+// 获取农历年每个月的天数数组
+function lunarMonthsDays(year) {
+  const result = [];
+  const months = lunarYearMonths(year);
+  const leap = leapMonthOf(year);
+  const info = LUNAR_INFO[year - LUNAR_BASE_YEAR];
+  // 解析leap days - bit 16 encodes leap month days
+  const leapDays = (info >> 16) & 0x1 ? 30 : 29;
 
-const letterText = `没想到我会用这种方式回信吧，看到你的来信我真的开心了很久。
-原来我以为自己写得已经够笨拙了，但看来你也是大哥二哥。
-看着你的信想起我们第一次见面、一起去公园、电玩城、看电影，还有你说我主动、细心、耐心的时候，我一边看一边傻笑，感觉自己被你很认真地放在心上。
-你说自己不自信，说怕我会失望，其实我想告诉你，在我这里你真的很好。
-不是因为滤镜，也不是因为恋爱脑，而是你本来就真诚、可爱、温柔，又有很多自己可能没发现的闪光点。
-你不用总担心自己哪里不够好，我喜欢的是完整的你，包括你的害羞、敏感、小别扭，还有你慢慢靠近我的样子。
-只要是你站在我的面前，你就已经是全世界了。
-我们都要珍惜当下，好好感受彼此，勇敢一点，也温柔一点。
-以后我们当然还会有不安、有笨拙、有说不出口的时候，但没关系，我们可以慢慢学，慢慢说，慢慢走。
-我会更认真地爱你，也会努力让你在我这里一直安心。
-谢谢你出现在我的世界里。
-我的乖乖，我也想和你一直走下去。`;
-
-const lines = letterText.trim().split('\n').filter(l => l.trim());
-const letterOverlay = document.getElementById('letterOverlay');
-let letterTimer = null;
-
-function startLetter() {
-  // 清空旧内容，创建占位区 + 文字行 + 底部占位
-  letterOverlay.innerHTML = '';
-
-  const spacer = document.createElement('div');
-  spacer.className = 'letter-spacer';
-  letterOverlay.appendChild(spacer);
-
-  const lineEls = lines.map((text) => {
-    const el = document.createElement('div');
-    el.className = 'letter-line';
-    el.textContent = text;
-    letterOverlay.appendChild(el);
-    return el;
-  });
-
-  const bottom = document.createElement('div');
-  bottom.className = 'letter-bottom';
-  letterOverlay.appendChild(bottom);
-
-  const msPerLine = 5000; // 每句 5 秒
-  let idx = 0;
-
-  function revealNext() {
-    if (idx >= lineEls.length) { letterTimer = null; return; }
-    lineEls[idx].classList.add('show');
-
-    // 自动滚动到当前行
-    const elTop = lineEls[idx].getBoundingClientRect().top;
-    const scrollTarget = letterOverlay.scrollTop + elTop - window.innerHeight * 0.45;
-    letterOverlay.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-
-    idx++;
-    if (idx < lineEls.length) {
-      letterTimer = setTimeout(revealNext, msPerLine);
-    } else {
-      letterTimer = setTimeout(() => { letterTimer = null; }, msPerLine + 4000);
+  for (let m = 1; m <= months; m++) {
+    if (leap && m === leap + 1) {
+      result.push({ month: -leap, days: leapDays }); // 负号标记闰月
     }
+    const bitIdx = m - (leap && m > leap ? 2 : 1);
+    const days = (info >> bitIdx) & 0x1 ? 30 : 29;
+    result.push({ month: (leap && m > leap) ? m - 1 : m, days: days });
   }
-
-  // 稍作延迟让入场动画完成
-  letterTimer = setTimeout(revealNext, 1800);
+  return result;
 }
 
-// 入场通过后启动情书
-const origGateYes = gateYes.onclick;
-gateYes.addEventListener('click', () => {
-  // 等入场动画结束后启动情书
+// 计算农历正月初一的公历日期
+function lunarNewYearGreg(year) {
+  // 从1900年正月初一(1900-01-31)开始累加
+  let days = gregToDays(1900, 1, 31);
+  for (let y = 1900; y < year; y++) {
+    days += lunarYearDays(y);
+  }
+  const d = new Date(days * 86400000);
+  return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
+}
+
+// 农历日期 → 公历日期
+function lunarToGreg(year, month, day, isLeap) {
+  const [nyY, nyM, nyD] = lunarNewYearGreg(year);
+  let gregDays = gregToDays(nyY, nyM, nyD) - 1; // 正月初一的前一天
+
+  const monthsData = lunarMonthsDays(year);
+  for (let i = 0; i < monthsData.length; i++) {
+    const md = monthsData[i];
+    const isThisLeap = md.month < 0;
+    const actualMonth = Math.abs(md.month);
+    if (actualMonth < month || (actualMonth === month && (!isLeap || isThisLeap))) {
+      gregDays += md.days;
+      if (actualMonth === month && isThisLeap) break;
+    }
+    if (actualMonth === month && !isThisLeap) break;
+  }
+
+  gregDays += day;
+  const d = new Date(gregDays * 86400000);
+  return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
+}
+
+// ═══════════════════════════════════════════
+//  纪念日 & 生日倒计时
+// ═══════════════════════════════════════════
+
+const ANNIVERSARY = new Date(2026, 4, 10); // 2026-05-10
+
+// 乖乖：农历正月初二
+const GIRL_LUNAR = { month: 1, day: 2 };
+// 小乖：农历三月廿一
+const BOY_LUNAR = { month: 3, day: 21 };
+
+function lunarBirthdayToGreg(lunarMonth, lunarDay, targetYear) {
+  // 先查当年农历该日期
+  const [y1, m1, d1] = lunarToGreg(targetYear, lunarMonth, lunarDay, false);
+  return { y: y1, m: m1, d: d1 };
+}
+
+function daysBetween(gregDate, now) {
+  const d = new Date(gregDate.y, gregDate.m - 1, gregDate.d);
+  d.setHours(0, 0, 0, 0);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((d.getTime() - today.getTime()) / 86400000);
+}
+
+function getNextBirthday(lunarMonth, lunarDay) {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+
+  // 尝试今年
+  const thisYearDate = lunarBirthdayToGreg(lunarMonth, lunarDay, thisYear);
+  const daysThisYear = daysBetween(thisYearDate, now);
+  if (daysThisYear >= 0) {
+    return { ...thisYearDate, remaining: daysThisYear };
+  }
+
+  // 已经过了，看明年
+  const nextYear = thisYear + 1;
+  const nextYearDate = lunarBirthdayToGreg(lunarMonth, lunarDay, nextYear);
+  return { ...nextYearDate, remaining: daysBetween(nextYearDate, now) };
+}
+
+function formatDate(y, m, d) {
+  return `${y}.${String(m).padStart(2,'0')}.${String(d).padStart(2,'0')}`;
+}
+
+function updateCountdowns() {
+  const now = new Date();
+
+  // 纪念日
+  const diffDays = Math.floor((now.getTime() - ANNIVERSARY.getTime()) / 86400000) + 1;
+  document.getElementById('anniversaryDays').textContent = Math.max(0, diffDays);
+  document.getElementById('anniversaryDate').textContent = '2026.05.10 起';
+
+  // 乖乖生日
+  const girl = getNextBirthday(GIRL_LUNAR.month, GIRL_LUNAR.day);
+  const girlDaysEl = document.getElementById('girlDays');
+  const girlNoteEl = document.getElementById('girlNote');
+  girlDaysEl.textContent = girl.remaining > 0 ? girl.remaining : '今天';
+  girlNoteEl.textContent = girl.remaining === 0 ? '生日快乐！' :
+    girl.remaining === 1 ? '就在明天' :
+    formatDate(girl.y, girl.m, girl.d);
+
+  // 小乖生日
+  const boy = getNextBirthday(BOY_LUNAR.month, BOY_LUNAR.day);
+  const boyDaysEl = document.getElementById('boyDays');
+  const boyNoteEl = document.getElementById('boyNote');
+  boyDaysEl.textContent = boy.remaining > 0 ? boy.remaining : '今天';
+  boyNoteEl.textContent = boy.remaining === 0 ? '生日快乐！' :
+    boy.remaining === 1 ? '就在明天' :
+    formatDate(boy.y, boy.m, boy.d);
+}
+
+updateCountdowns();
+
+// 每天午夜刷新
+function scheduleMidnightRefresh() {
+  const now = new Date();
+  const ms = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
   setTimeout(() => {
-    if (gatePassed) startLetter();
-  }, 1600);
-});
+    updateCountdowns();
+    setInterval(updateCountdowns, 86400000);
+  }, ms + 1000);
+}
+scheduleMidnightRefresh();
 
 // ═══════════════════════════════════════════
 //  爱心粒子动画
@@ -437,7 +434,6 @@ function scatterXY(x, y, beta) {
 
 function curve(p) { return (4*Math.sin(4*p))/TAU; }
 
-// 预计算 60 帧平滑动画 (~22fps 实际渲染)
 let frames = [];
 const frameCount = 60;
 const N_HEART = 600, N_CENTER = 3000, N_HALO_BASE = 800;
@@ -489,18 +485,9 @@ function buildHeartData() {
 }
 buildHeartData();
 
-// 粉色爱心
-const HEART_R = 0xff, HEART_G = 0x44, HEART_B = 0x70; // #ff4470
+const HEART_R = 0xff, HEART_G = 0x44, HEART_B = 0x70;
 let imgData, lastFrameTime = 0;
-const FRAME_MS = 44; // ~22fps, 60帧约2.7秒一个呼吸周期
-
-function lerpFrame(fi) {
-  const f0 = frames[Math.floor(fi) % frameCount];
-  const f1 = frames[Math.ceil(fi) % frameCount];
-  const t = fi - Math.floor(fi);
-  // 只复制 f0，小幅度的帧间插值不做(肉眼看不出来)，直接跳到目标帧
-  return f0;
-}
+const FRAME_MS = 44;
 
 function renderHeartFrame(fi) {
   if (!frames.length) return requestAnimationFrame(()=>renderHeartFrame(fi));
@@ -514,7 +501,6 @@ function renderHeartFrame(fi) {
 
   hCtx.clearRect(0,0,CW,CH);
 
-  // 背景光晕
   hCtx.save();
   hCtx.globalAlpha = 0.07;
   const GR = Math.min(CW,CH)*0.28;
@@ -552,7 +538,7 @@ function renderHeartFrame(fi) {
 }
 
 // ═══════════════════════════════════════════
-//  优雅粒子特效 (替代 emoji)
+//  优雅粒子特效
 // ═══════════════════════════════════════════
 
 const sparkleCanvas = document.getElementById('sparkleCanvas');
@@ -705,8 +691,8 @@ function showRandomMessage(){
 }
 
 // ═══════════════════════════════════════════
-//  音乐 — A Thousand Years (MP3播放)
-//  ═══════════════════════════════════════════
+//  音乐 — A Thousand Years
+// ═══════════════════════════════════════════
 
 const bgm = document.getElementById('bgm');
 let musicPlaying = false;
@@ -723,10 +709,22 @@ function toggleMusic() {
       document.getElementById('btnMusic').textContent = '🎵 暂停';
       showToast('A Thousand Years ♪');
     }).catch(() => {
-      showToast('音乐加载失败，请确保 a-thousand-years.mp3 在同目录下');
+      showToast('音乐加载失败');
     });
   }
 }
+
+// 首次点击页面任意位置自动播放音乐
+let musicStarted = false;
+document.addEventListener('click', () => {
+  if (!musicStarted) {
+    musicStarted = true;
+    bgm.play().then(() => {
+      musicPlaying = true;
+      document.getElementById('btnMusic').textContent = '🎵 暂停';
+    }).catch(() => {});
+  }
+}, { once: true });
 
 // ═══════════════════════════════════════════
 //  交互: 点击爱心
