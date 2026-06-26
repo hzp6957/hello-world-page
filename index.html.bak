@@ -94,43 +94,7 @@ body {
 .letter-spacer { flex:0 0 clamp(15vh,20vh,30vh); }
 .letter-bottom { flex:0 0 clamp(10vh,15vh,25vh); }
 
-/* 纪念日计数器 */
-.anniversary {
-  position:fixed;top:clamp(10px,3vh,26px);right:clamp(10px,3vw,28px);z-index:11;
-  display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:clamp(8px,1.5vh,14px) clamp(14px,3vw,22px);
-  border-radius:18px;
-  background:rgba(255,68,112,0.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid rgba(255,107,157,0.15);
-  opacity:0;transform:translateY(-12px);
-  transition:opacity 1s ease,transform 1s ease;
-  pointer-events:none;
-}
-.anniversary.show { opacity:1;transform:translateY(0); }
-.anniversary-label {
-  font-size:clamp(0.62rem,1.3vw,0.72rem);
-  color:rgba(255,255,255,0.5);letter-spacing:0.08em;font-weight:400;
-}
-.anniversary-days {
-  font-size:clamp(1.4rem,4vw,2rem);
-  font-weight:800;letter-spacing:0.04em;
-  background:linear-gradient(180deg,#ffb3c6,#ff6b9d);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  line-height:1.1;
-}
-.anniversary-unit {
-  font-size:clamp(0.6rem,1.2vw,0.68rem);
-  color:rgba(255,255,255,0.4);letter-spacing:0.06em;
-}
-.anniversary-date {
-  margin-top:2px;font-size:clamp(0.55rem,1vw,0.62rem);
-  color:rgba(255,255,255,0.25);letter-spacing:0.04em;
-}
-
-@media (max-width:480px) {
-  .btn{padding:9px 16px;font-size:0.78rem}.btn-row{gap:6px}
-  .anniversary{top:auto;bottom:clamp(80px,16vh,120px);right:clamp(6px,2vw,16px)}
-}
+@media (max-width:480px) { .btn{padding:9px 16px;font-size:0.78rem}.btn-row{gap:6px} }
 </style>
 </head>
 <body>
@@ -153,14 +117,6 @@ body {
 <div class="letter-overlay" id="letterOverlay"></div>
 
 <div class="header"><div class="title" style="display:none"></div></div>
-
-<!-- 恋爱纪念日计数器 -->
-<div class="anniversary" id="anniversaryEl">
-  <div class="anniversary-label">恋 爱 纪 念 日</div>
-  <div class="anniversary-days" id="anniversaryDays">--</div>
-  <div class="anniversary-unit">天</div>
-  <div class="anniversary-date" id="anniversaryDate"></div>
-</div>
 
 <div class="footer">
   <div class="btn-row">
@@ -213,10 +169,7 @@ gateYes.addEventListener('click', () => {
     gateEl.style.pointerEvents = 'none';
     gateEl.style.transition = 'opacity 0.8s';
 
-    // 启动纪念日计数器
-	    onGatePassed();
-
-	    // 播放音乐
+    // 播放音乐
     bgm.play().then(() => {
       musicPlaying = true;
       document.getElementById('btnMusic').textContent = '🎵 暂停';
@@ -257,79 +210,6 @@ gateYes.addEventListener('mouseenter', () => {
 gateYes.addEventListener('mouseleave', () => {
   if (!gatePassed) gateYes.style.transform = 'scale(1)';
 });
-
-// ═══════════════════════════════════════════
-//  恋爱纪念日计数器 (联网自动更新)
-// ═══════════════════════════════════════════
-
-const ANNIVERSARY_DATE = new Date(2026, 4, 10); // 2026年5月10日，月份从0开始
-
-function updateAnniversary() {
-  const now = new Date();
-  const diffMs = now.getTime() - ANNIVERSARY_DATE.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  // 5月10日当天为第1天
-  const dayNumber = diffDays >= 0 ? diffDays + 1 : 0;
-
-  const el = document.getElementById('anniversaryEl');
-  const daysEl = document.getElementById('anniversaryDays');
-  const dateEl = document.getElementById('anniversaryDate');
-
-  // 入场后显示
-  if (gatePassed && dayNumber > 0) {
-    el.classList.add('show');
-  }
-
-  // 数字动画
-  if (dayNumber > 0) {
-    animateNumber(daysEl, dayNumber);
-  } else {
-    daysEl.textContent = '--';
-  }
-
-  const y = ANNIVERSARY_DATE.getFullYear();
-  const m = String(ANNIVERSARY_DATE.getMonth() + 1).padStart(2,'0');
-  const d = String(ANNIVERSARY_DATE.getDate()).padStart(2,'0');
-  dateEl.textContent = `${y}.${m}.${d} 起`;
-}
-
-let animFrameId = null;
-function animateNumber(el, target) {
-  const current = parseInt(el.textContent, 10) || 0;
-  if (current === target) return;
-  if (animFrameId) cancelAnimationFrame(animFrameId);
-
-  const start = performance.now();
-  const duration = 800;
-  const from = current;
-
-  function step(ts) {
-    const elapsed = ts - start;
-    const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-    el.textContent = Math.round(from + (target - from) * eased);
-    if (progress < 1) {
-      animFrameId = requestAnimationFrame(step);
-    } else {
-      animFrameId = null;
-    }
-  }
-  animFrameId = requestAnimationFrame(step);
-}
-
-// 入场时更新
-function onGatePassed() {
-  updateAnniversary();
-
-  // 每天午夜自动刷新
-  const now = new Date();
-  const msToMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
-  setTimeout(() => {
-    updateAnniversary();
-    // 之后每24小时更新一次
-    setInterval(updateAnniversary, 24 * 60 * 60 * 1000);
-  }, msToMidnight + 1000);
-}
 
 // ═══════════════════════════════════════════
 //  情书逐句浮现
