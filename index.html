@@ -227,12 +227,25 @@ const LUNAR_MONTHS = {
 function lunarToGreg(year, lMonth, lDay) {
   const [nyY, nyM, nyD] = NEW_YEAR_DATES[year];
   let ms = Date.UTC(nyY, nyM - 1, nyD);
-  const months = LUNAR_MONTHS[year] || [];
-  for (let i = 0; i < months.length; i++) {
-    const m = months[i];
-    const rm = Math.abs(m);
-    if (rm < lMonth) { ms += Math.abs(m) * 86400000; }
-    else if (rm === lMonth) break;
+  const raw = LUNAR_MONTHS[year] || [];
+
+  // Build expanded month list: [{month, days, isLeap}]
+  // Negative entries pair with preceding positive: [days, -monthNumber]
+  const months = [];
+  let mNum = 1;
+  for (let i = 0; i < raw.length; i++) {
+    const val = raw[i];
+    if (val < 0) continue;
+    const isLeap = (i + 1 < raw.length && raw[i + 1] < 0);
+    const leapOf = isLeap ? Math.abs(raw[i + 1]) : 0;
+    months.push({ month: isLeap ? leapOf : mNum, days: val, isLeap });
+    if (!isLeap) mNum++;
+  }
+
+  // Sum days of all months before the target month
+  for (const m of months) {
+    if (m.month < lMonth) { ms += m.days * 86400000; }
+    else if (m.month === lMonth) break;
   }
   ms += (lDay - 1) * 86400000;
   const d = new Date(ms);
@@ -633,9 +646,9 @@ function toggleMusic() {
   }
 }
 
-// 首次点击页面任意位置自动播放音乐
+// 首次交互自动播放音乐
 let musicStarted = false;
-document.addEventListener('click', () => {
+function tryAutoPlayMusic() {
   if (!musicStarted) {
     musicStarted = true;
     bgm.play().then(() => {
@@ -643,13 +656,14 @@ document.addEventListener('click', () => {
       document.getElementById('btnMusic').textContent = '🎵 暂停';
     }).catch(() => {});
   }
-}, { once: true });
+}
 
 // ═══════════════════════════════════════════
 //  交互: 点击爱心
 // ═══════════════════════════════════════════
 
 heartCanvas.addEventListener('click', (e) => {
+  tryAutoPlayMusic();
   emitSparkles(e.clientX, e.clientY, 18, ['#ff6b9d','#ff4470','#ffb3c6','#ffd740']);
   launchFireworks(3);
   const msgs = ['乖乖最好啦~','好爱好爱你','为你心动','爱的抱抱','亲一个'];
@@ -658,6 +672,7 @@ heartCanvas.addEventListener('click', (e) => {
 
 heartCanvas.addEventListener('dblclick', (e) => {
   e.preventDefault();
+  tryAutoPlayMusic();
   launchFireworks(10);
   emitSparkles(e.clientX, e.clientY, 40, ['#ff6b9d','#ff4470','#ffd740','#c084fc','#22d3ee']);
   showToast('满满的爱都给你');
@@ -668,23 +683,30 @@ heartCanvas.addEventListener('dblclick', (e) => {
 // ═══════════════════════════════════════════
 
 document.getElementById('btnFirework').addEventListener('click',()=>{
+  tryAutoPlayMusic();
   launchFireworks(12);showToast('为你绽放最美的烟花');
 });
 document.getElementById('btnBubble').addEventListener('click',()=>{
+  tryAutoPlayMusic();
   const cx=window.innerWidth/2,cy=window.innerHeight*0.42;
   for(let i=0;i<8;i++) setTimeout(()=>emitSparkles(cx+(Math.random()-0.5)*220,cy+(Math.random()-0.5)*160,10,['#ff6b9d','#ffb3c6','#ff4470']),i*100);
   showToast('爱你一万遍');
 });
 document.getElementById('btnStar').addEventListener('click',()=>{
+  tryAutoPlayMusic();
   launchFireworks(6);
   for(let i=0;i<40;i++) setTimeout(()=>emitSparkles(Math.random()*innerWidth*0.8+innerWidth*0.1,Math.random()*innerHeight*0.35+innerHeight*0.05,4,['#ffd740','#c084fc','#22d3ee']),i*35);
   showToast('满天繁星，不如你眼睛里的光');
 });
-document.getElementById('btnMessage').addEventListener('click',showRandomMessage);
+document.getElementById('btnMessage').addEventListener('click',()=>{
+  tryAutoPlayMusic();
+  showRandomMessage();
+});
 document.getElementById('btnMusic').addEventListener('click',toggleMusic);
 
 // 键盘
 window.addEventListener('keydown',e=>{
+  tryAutoPlayMusic();
   switch(e.key.toLowerCase()){
     case'f':launchFireworks(10);showToast('为你绽放！');break;
     case'b':emitSparkles(innerWidth/2,innerHeight/2,30,['#ff6b9d','#ff4470','#ffb3c6']);showToast('爱心雨！');break;
