@@ -701,6 +701,9 @@ const GH_REPO = 'hello-world-page';
 const GH_BRANCH = 'main';
 const GH_API = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO;
 const INDEX_PATH = 'photos/index.json';
+// jsdelivr CDN 读取文件（自动同步 GitHub，国内有节点，速度更快）
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/' + GH_OWNER + '/' + GH_REPO + '@' + GH_BRANCH + '/';
+// raw 作为回退
 const RAW_BASE = 'https://raw.githubusercontent.com/' + GH_OWNER + '/' + GH_REPO + '/' + GH_BRANCH + '/';
 
 function ghConfigured() { return GH_TOKEN.indexOf('YOUR_') === -1; }
@@ -712,10 +715,17 @@ function escHtml(s) {
 }
 
 function loadIndex() {
-  var url = RAW_BASE + INDEX_PATH + '?t=' + Date.now();
-  return fetch(url).then(function (res) {
-    if (!res.ok) throw new Error(res.status);
+  if (!ghConfigured()) return Promise.resolve([]);
+  // 通过 GitHub API 读索引（永远最新，不经过 CDN 缓存）
+  return fetch(GH_API + '/contents/' + INDEX_PATH, {
+    headers: { 'Authorization': 'Bearer ' + GH_TOKEN }
+  }).then(function (res) {
+    if (!res.ok) { if (res.status === 404) return Promise.resolve([]); throw new Error(res.status); }
     return res.json();
+  }).then(function (data) {
+    if (!data || !data.content) return [];
+    var json = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+    return JSON.parse(json);
   }).catch(function () { return []; });
 }
 
@@ -758,7 +768,7 @@ function uploadFile(file) {
         if (!res.ok) throw new Error('上传失败: ' + res.status);
         return res.json();
       }).then(function () {
-        resolve({ file: safeName, url: RAW_BASE + path });
+        resolve({ file: safeName, url: CDN_BASE + path });
       }).catch(reject);
     };
     reader.onerror = reject;
@@ -804,7 +814,7 @@ function renderAlbum() {
     grid.innerHTML = photos.map(function (p, i) {
       var t = new Date(p.time);
       var ts = t.getFullYear() + '/' + (t.getMonth() + 1) + '/' + t.getDate();
-      var url = p.url || (RAW_BASE + 'photos/' + p.file);
+      var url = p.url || (CDN_BASE + 'photos/' + p.file);
       return '<div class="album-card">' +
         '<img src="' + escHtml(url) + '" alt="' + escHtml(p.caption) + '" loading="lazy" data-url="' + escHtml(url) + '" data-caption="' + escHtml(p.caption || '') + '">' +
         '<div class="album-card-info"><div class="album-card-caption">' + escHtml(p.caption || '未命名') + '</div><div class="album-card-date">' + ts + '</div></div>' +
