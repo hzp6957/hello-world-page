@@ -715,18 +715,20 @@ function escHtml(s) {
 }
 
 function loadIndex() {
-  if (!ghConfigured()) return Promise.resolve([]);
-  // 通过 GitHub API 读索引（永远最新，不经过 CDN 缓存）
-  return fetch(GH_API + '/contents/' + INDEX_PATH, {
-    headers: { 'Authorization': 'Bearer ' + GH_TOKEN }
-  }).then(function (res) {
-    if (!res.ok) { if (res.status === 404) return Promise.resolve([]); throw new Error(res.status); }
-    return res.json();
-  }).then(function (data) {
-    if (!data || !data.content) return [];
-    var json = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-    return JSON.parse(json);
-  }).catch(function () { return []; });
+  // jsdelivr CDN 国内可直连，带时间戳防缓存
+  var ts = Date.now();
+  return fetch(CDN_BASE + INDEX_PATH + '?t=' + ts)
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.status);
+      return res.json();
+    })
+    .catch(function () { return []; });
+}
+
+// 上传成功后刷新 jsdelivr CDN 缓存
+function purgeCDN() {
+  var purgeUrl = 'https://purge.jsdelivr.net/gh/' + GH_OWNER + '/' + GH_REPO + '@' + GH_BRANCH + '/' + INDEX_PATH;
+  return fetch(purgeUrl, { method: 'GET' }).catch(function () {});
 }
 
 function getIndexSha() {
@@ -886,6 +888,7 @@ document.getElementById('btnAlbumUpload').addEventListener('click', function () 
       captionInput.value = '';
       document.getElementById('albumFileLabel').textContent = '选图';
       showToast('上传成功 ' + files.length + ' 张 📷');
+      purgeCDN();
       btn.disabled = false;
       btn.textContent = '上传';
       renderAlbum();
@@ -901,7 +904,7 @@ document.getElementById('btnAlbumUpload').addEventListener('click', function () 
       });
     }).then(function () { uploadNext(i + 1); }).catch(function (err) {
       console.error('upload:', err);
-      showToast('上传失败，请重试');
+      showToast('上传失败，请确认网络通畅');
       btn.disabled = false;
       btn.textContent = '上传';
     });
