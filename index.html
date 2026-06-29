@@ -2,10 +2,17 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
 <title>乖乖我爱你</title>
 <style>
-:root { --bg: #000000; }
+:root {
+  --bg: #000000;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
 
 * { margin:0;padding:0;box-sizing:border-box; }
 
@@ -15,251 +22,229 @@ body {
   font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
   -webkit-tap-highlight-color:transparent;
   user-select:none;-webkit-user-select:none;
+  overscroll-behavior:none;
 }
 
 #heartCanvas { position:fixed;inset:0;z-index:0; }
 #sparkleCanvas { position:fixed;inset:0;z-index:2;pointer-events:none; }
 #fwCanvas { position:fixed;inset:0;z-index:5;pointer-events:none; }
 
+/* ═══ 按钮 ═══ */
 .footer {
-  position:fixed;bottom:clamp(10px,3vh,34px);left:0;right:0;z-index:10;
-  display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px;
+  position:fixed;bottom:calc(clamp(12px,3vh,34px) + var(--safe-bottom));left:0;right:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 10px;
 }
-.btn-row { display:flex;gap:10px;flex-wrap:wrap;justify-content:center; }
+.btn-row { display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:480px; }
 .btn {
-  padding:10px 22px;border:1px solid rgba(255,255,255,0.12);border-radius:40px;
+  padding:11px 16px;border:1px solid rgba(255,255,255,0.12);border-radius:40px;
   background:rgba(255,255,255,0.05);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  color:rgba(255,255,255,0.9);font-size:clamp(0.78rem,2vw,0.9rem);font-weight:600;
+  color:rgba(255,255,255,0.9);font-size:0.85rem;font-weight:600;
   font-family:inherit;letter-spacing:0.04em;cursor:pointer;transition:all 0.25s;white-space:nowrap;
+  min-height:44px;touch-action:manipulation;
 }
-.btn:active{transform:scale(0.94)}
+.btn:active{transform:scale(0.94);background:rgba(255,255,255,0.12)}
 .btn--pink{background:rgba(255,45,105,0.22);border-color:rgba(255,45,105,0.38)}
-.btn--pink:hover{background:rgba(255,45,105,0.35);box-shadow:0 0 30px rgba(255,45,105,0.22)}
+.btn--pink:active{background:rgba(255,45,105,0.4)}
 .btn--gold{background:rgba(255,180,40,0.18);border-color:rgba(255,180,40,0.33)}
-.btn--gold:hover{background:rgba(255,180,40,0.3);box-shadow:0 0 30px rgba(255,180,40,0.2)}
+.btn--gold:active{background:rgba(255,180,40,0.35)}
 .btn--purple{background:rgba(140,80,255,0.18);border-color:rgba(140,80,255,0.33)}
-.btn--purple:hover{background:rgba(140,80,255,0.3);box-shadow:0 0 30px rgba(140,80,255,0.2)}
+.btn--purple:active{background:rgba(140,80,255,0.35)}
+.btn--album{background:rgba(255,140,80,0.18);border-color:rgba(255,160,100,0.33)}
+.btn--album:active{background:rgba(255,140,80,0.35)}
 @media (min-width:768px) {
+  .btn{padding:10px 22px;font-size:clamp(0.78rem,2vw,0.9rem)}
   .btn:hover{transform:translateY(-2px);background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.22)}
-  .btn--pink:hover{transform:translateY(-2px)}.btn--gold:hover{transform:translateY(-2px)}.btn--purple:hover{transform:translateY(-2px)}
+  .btn--pink:hover{transform:translateY(-2px);background:rgba(255,45,105,0.35);box-shadow:0 0 30px rgba(255,45,105,0.22)}
+  .btn--gold:hover{transform:translateY(-2px);background:rgba(255,180,40,0.3);box-shadow:0 0 30px rgba(255,180,40,0.2)}
+  .btn--purple:hover{transform:translateY(-2px);background:rgba(140,80,255,0.3);box-shadow:0 0 30px rgba(140,80,255,0.2)}
+  .btn--album:hover{transform:translateY(-2px);background:rgba(255,140,80,0.3);box-shadow:0 0 30px rgba(255,140,80,0.2)}
 }
 
+/* ═══ Toast ═══ */
 .toast {
-  padding:10px 26px;border-radius:40px;background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border:1px solid rgba(255,255,255,0.06);
-  color:rgba(255,255,255,0.9);font-size:clamp(0.75rem,2vw,0.85rem);text-align:center;
-  letter-spacing:0.04em;transition:opacity 0.45s,transform 0.45s;pointer-events:none;max-width:90vw;line-height:1.5;
+  padding:12px 28px;border-radius:40px;background:rgba(20,20,30,0.88);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.08);
+  color:rgba(255,255,255,0.9);font-size:0.85rem;text-align:center;
+  letter-spacing:0.04em;transition:opacity 0.4s,transform 0.4s;pointer-events:none;max-width:88vw;line-height:1.5;
 }
 .toast--hidden{opacity:0;transform:translateY(8px)}
 
-/* 纪念日 + 生日倒计时容器 */
+/* ═══ 纪念日 ═══ */
 .side-panel {
-  position:fixed;top:clamp(10px,3vh,20px);z-index:11;
-  display:flex;flex-direction:column;gap:clamp(8px,1.5vh,14px);
-  pointer-events:none;
+  position:fixed;top:calc(clamp(12px,3vh,24px) + var(--safe-top));z-index:11;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
 }
-.side-panel.right { right:clamp(10px,3vw,24px); }
-.side-panel.left { left:clamp(10px,3vw,24px); }
-
-/* 纪念日计数器 */
+.side-panel.right { right:clamp(8px,2.5vw,20px); }
 .anniversary {
   display:flex;flex-direction:column;align-items:center;gap:1px;
-  padding:clamp(8px,1.5vh,14px) clamp(14px,3vw,22px);
-  border-radius:18px;
-  background:rgba(255,68,112,0.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:10px 16px;border-radius:16px;
+  background:rgba(255,68,112,0.1);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(255,107,157,0.15);
-  opacity:1;
 }
-.anniversary-label {
-  font-size:clamp(0.58rem,1.2vw,0.68rem);
-  color:rgba(255,255,255,0.45);letter-spacing:0.06em;font-weight:400;
+.anniversary-label{font-size:0.62rem;color:rgba(255,255,255,0.5);letter-spacing:0.06em;font-weight:400}
+.anniversary-days{font-size:1.5rem;font-weight:800;letter-spacing:0.04em;background:linear-gradient(180deg,#ffb3c6,#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+.anniversary-unit{font-size:0.55rem;color:rgba(255,255,255,0.4);letter-spacing:0.04em}
+.anniversary-date{margin-top:2px;font-size:0.5rem;color:rgba(255,255,255,0.25);letter-spacing:0.03em}
+@media (max-width:600px) {
+  .side-panel.right{top:auto;bottom:calc(clamp(90px,17vh,120px) + var(--safe-bottom));right:6px}
+  .anniversary{padding:8px 14px;border-radius:14px;min-width:85px;text-align:center}
+  .anniversary-days{font-size:1.35rem}
 }
-.anniversary-days {
-  font-size:clamp(1.3rem,3.6vw,1.8rem);
-  font-weight:800;letter-spacing:0.04em;
-  background:linear-gradient(180deg,#ffb3c6,#ff6b9d);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  line-height:1.1;
-}
-.anniversary-unit {
-  font-size:clamp(0.55rem,1.1vw,0.62rem);
-  color:rgba(255,255,255,0.35);letter-spacing:0.04em;
-}
-.anniversary-date {
-  margin-top:1px;font-size:clamp(0.5rem,0.9vw,0.58rem);
-  color:rgba(255,255,255,0.22);letter-spacing:0.03em;
+@media (min-width:768px) {
+  .anniversary{padding:clamp(10px,2vh,16px) clamp(16px,3.5vw,24px)}
+  .anniversary-label{font-size:clamp(0.62rem,1.3vw,0.7rem)}
+  .anniversary-days{font-size:clamp(1.6rem,4vw,2rem)}
+  .anniversary-unit{font-size:clamp(0.58rem,1.2vw,0.65rem)}
+  .anniversary-date{font-size:clamp(0.52rem,1vw,0.6rem)}
 }
 
-
-	/* 入场门 */
-	#gate {
-	  position:fixed;inset:0;z-index:100;
-	  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
-	  background:rgba(0,0,0,0.88);
-	  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
-	  transition:opacity 0.6s,visibility 0.6s;
-	}
-	#gate.hidden { opacity:0;visibility:hidden;pointer-events:none; }
-	.gate-question {
-	  color:rgba(255,255,255,0.9);
-	  font-size:clamp(1.1rem,3vw,1.5rem);
-	  font-weight:700;letter-spacing:0.08em;text-align:center;
-	  line-height:1.6;
-	}
-	.gate-btn {
-	  padding:14px 48px;border-radius:50px;border:none;
-	  background:linear-gradient(135deg,#ff4470,#ff6b9d);
-	  color:#fff;font-size:clamp(1rem,2.5vw,1.2rem);font-weight:700;
-	  font-family:inherit;letter-spacing:0.08em;cursor:pointer;
-	  box-shadow:0 0 40px rgba(255,68,112,0.35);
-	  transition:all 0.3s;
-	}
-	.gate-btn:active { transform:scale(0.94); }
-	@media (min-width:768px) {
-	  .gate-btn:hover { transform:translateY(-3px);box-shadow:0 0 60px rgba(255,68,112,0.5); }
-	}
-
-@media (max-width:480px) {
-  .btn{padding:9px 16px;font-size:0.78rem}.btn-row{gap:6px}
-  .side-panel.right{top:auto;bottom:clamp(80px,16vh,110px);right:clamp(4px,2vw,12px)}
-  .side-panel.left{top:auto;bottom:clamp(80px,16vh,110px);left:clamp(4px,2vw,12px)}
+/* ═══ 入场门 ═══ */
+#gate {
+  position:fixed;inset:0;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  background:rgba(0,0,0,0.9);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+  transition:opacity 0.6s,visibility 0.6s;padding:0 24px;
+}
+#gate.hidden { opacity:0;visibility:hidden;pointer-events:none; }
+.gate-question {
+  color:rgba(255,255,255,0.9);font-size:1.2rem;font-weight:700;
+  letter-spacing:0.08em;text-align:center;line-height:1.7;
+}
+.gate-btn {
+  padding:16px 52px;border-radius:50px;border:none;
+  background:linear-gradient(135deg,#ff4470,#ff6b9d);
+  color:#fff;font-size:1.1rem;font-weight:700;
+  font-family:inherit;letter-spacing:0.08em;cursor:pointer;
+  box-shadow:0 0 40px rgba(255,68,112,0.35);transition:all 0.3s;
+  min-height:50px;touch-action:manipulation;
+}
+.gate-btn:active{transform:scale(0.94);box-shadow:0 0 60px rgba(255,68,112,0.5)}
+@media (min-width:768px) {
+  .gate-question{font-size:clamp(1.2rem,3.5vw,1.6rem)}
+  .gate-btn{padding:14px 48px;font-size:clamp(1rem,2.8vw,1.25rem)}
+  .gate-btn:hover{transform:translateY(-3px);box-shadow:0 0 60px rgba(255,68,112,0.5)}
 }
 
 /* ═══ 时光相册 ═══ */
-.btn--album {
-  background:rgba(255,140,80,0.18);border-color:rgba(255,160,100,0.33);
-}
-.btn--album:hover {
-  background:rgba(255,140,80,0.3);box-shadow:0 0 30px rgba(255,140,80,0.2);
-}
-
 #albumOverlay {
-  position:fixed;inset:0;z-index:49;background:rgba(0,0,0,0.4);
-  opacity:0;visibility:hidden;transition:opacity 0.38s,visibility 0.38s;
+  position:fixed;inset:0;z-index:49;background:rgba(0,0,0,0.5);
+  opacity:0;visibility:hidden;transition:opacity 0.35s,visibility 0.35s;
 }
 #albumOverlay.show { opacity:1;visibility:visible; }
 
 #albumPanel {
   position:fixed;top:0;right:0;bottom:0;z-index:50;
-  width:min(420px,90vw);
-  background:rgba(10,10,18,0.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  width:min(420px,92vw);
+  background:rgba(10,10,18,0.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   border-left:1px solid rgba(255,255,255,0.08);
   display:flex;flex-direction:column;
-  transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);
+  transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 #albumPanel.open { transform:translateX(0); }
+/* 手机端：底部弹出 */
+@media (max-width:600px) {
+  #albumPanel {
+    top:auto;right:0;bottom:0;left:0;width:100%;height:88dvh;max-height:88dvh;
+    border-left:none;border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,0.1);
+    transform:translateY(100%);padding-bottom:var(--safe-bottom);
+  }
+  #albumPanel.open { transform:translateY(0); }
+}
 
 .album-header {
   display:flex;align-items:center;justify-content:space-between;
-  padding:clamp(12px,2vh,18px) clamp(14px,3vw,22px);
-  border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;
 }
-.album-title {
-  color:rgba(255,255,255,0.85);font-size:clamp(0.9rem,2vw,1.05rem);
-  font-weight:700;letter-spacing:0.05em;
-}
-.album-close {
-  width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);
+.album-title{color:rgba(255,255,255,0.85);font-size:1rem;font-weight:700;letter-spacing:0.05em}
+.album-close{
+  width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);font-size:1.1rem;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;
-  font-family:inherit;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-family:inherit;line-height:1;flex-shrink:0;touch-action:manipulation;
 }
-.album-close:hover { background:rgba(255,255,255,0.1);color:#fff; }
+.album-close:active{background:rgba(255,255,255,0.15);color:#fff}
+@media (min-width:768px){.album-close:hover{background:rgba(255,255,255,0.1);color:#fff}}
 
 .album-grid {
-  flex:1;overflow-y:auto;padding:clamp(10px,2vh,14px);
+  flex:1;overflow-y:auto;padding:12px;
   display:grid;grid-template-columns:1fr 1fr;gap:10px;
-  align-content:start;-webkit-overflow-scrolling:touch;
+  align-content:start;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
 }
-.album-grid::-webkit-scrollbar { width:3px; }
-.album-grid::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:3px; }
+.album-grid::-webkit-scrollbar{width:3px}
+.album-grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
 
 .album-card {
   border-radius:14px;overflow:hidden;position:relative;
   background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);
   animation:msgIn 0.3s ease-out;
 }
-.album-card img {
-  display:block;width:100%;height:120px;object-fit:cover;cursor:pointer;
-}
-.album-card-info {
-  padding:8px 10px;
-}
-.album-card-caption {
-  color:rgba(255,255,255,0.8);font-size:0.75rem;font-weight:500;
-  letter-spacing:0.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-.album-card-date {
-  color:rgba(255,255,255,0.3);font-size:0.62rem;margin-top:2px;
-}
+.album-card img{display:block;width:100%;height:120px;object-fit:cover;cursor:pointer}
+.album-card-info{padding:8px 10px}
+.album-card-caption{color:rgba(255,255,255,0.8);font-size:0.75rem;font-weight:500;letter-spacing:0.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.album-card-date{color:rgba(255,255,255,0.3);font-size:0.62rem;margin-top:2px}
 .album-card-del {
   position:absolute;top:6px;right:6px;
-  width:24px;height:24px;border-radius:50%;border:none;
-  background:rgba(0,0,0,0.55);color:rgba(255,255,255,0.7);
-  font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:all 0.2s;opacity:0;font-family:inherit;line-height:1;
+  width:28px;height:28px;border-radius:50%;border:none;
+  background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.75);
+  font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;font-family:inherit;line-height:1;opacity:0.7;touch-action:manipulation;
 }
-.album-card:hover .album-card-del,.album-card:active .album-card-del { opacity:1; }
-.album-card-del:hover { background:rgba(255,60,60,0.7);color:#fff; }
+.album-card-del:active{background:rgba(255,60,60,0.8);color:#fff}
+@media (min-width:768px) {
+  .album-card .album-card-del{opacity:0}
+  .album-card:hover .album-card-del{opacity:1}
+  .album-card-del:hover{background:rgba(255,60,60,0.7);color:#fff}
+}
 
 .album-upload {
-  display:flex;gap:8px;align-items:center;padding:clamp(10px,2vh,14px) clamp(14px,3vw,18px);
-  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex;gap:8px;align-items:center;padding:12px 14px;
+  border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;
 }
 .album-caption-input {
-  flex:1;padding:10px 12px;border-radius:12px;
+  flex:1;padding:11px 12px;border-radius:12px;min-height:44px;
   border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);
-  color:rgba(255,255,255,0.85);font-size:0.78rem;font-family:inherit;
+  color:rgba(255,255,255,0.85);font-size:0.85rem;font-family:inherit;
   outline:none;transition:border-color 0.2s;min-width:0;
 }
-.album-caption-input:focus { border-color:rgba(255,140,80,0.4); }
+.album-caption-input:focus{border-color:rgba(255,140,80,0.5)}
 .album-file-label {
-  padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);
-  background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);
-  font-size:0.78rem;cursor:pointer;white-space:nowrap;transition:all 0.2s;
-  font-family:inherit;
+  padding:11px 14px;border-radius:12px;min-height:44px;display:flex;align-items:center;
+  border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);
+  color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;white-space:nowrap;
+  font-family:inherit;touch-action:manipulation;
 }
-.album-file-label:hover { border-color:rgba(255,255,255,0.3); }
-.album-file-input { display:none; }
+.album-file-label:active{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.1)}
+@media (min-width:768px){.album-file-label:hover{border-color:rgba(255,255,255,0.3)}}
+.album-file-input{display:none}
 .album-upload-btn {
-  padding:10px 16px;border-radius:12px;border:none;
+  padding:11px 18px;border-radius:12px;border:none;min-height:44px;
   background:linear-gradient(135deg,#ff8c50,#d06040);
-  color:#fff;font-size:0.82rem;font-weight:700;font-family:inherit;
-  cursor:pointer;letter-spacing:0.04em;transition:all 0.2s;white-space:nowrap;
+  color:#fff;font-size:0.88rem;font-weight:700;font-family:inherit;
+  cursor:pointer;letter-spacing:0.04em;transition:all 0.2s;white-space:nowrap;touch-action:manipulation;
 }
-.album-upload-btn:active { transform:scale(0.94); }
-.album-upload-btn:disabled { opacity:0.5;pointer-events:none; }
-.album-empty {
-  grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.25);
-  font-size:0.82rem;padding:40px 0;letter-spacing:0.04em;
-}
+.album-upload-btn:active{transform:scale(0.94);opacity:0.85}
+.album-upload-btn:disabled{opacity:0.45;pointer-events:none}
+.album-empty{grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.25);font-size:0.85rem;padding:50px 0;letter-spacing:0.04em}
 
-/* 照片预览灯箱 */
+/* ═══ 灯箱 ═══ */
 #photoLightbox {
-  position:fixed;inset:0;z-index:200;
-  background:rgba(0,0,0,0.92);
-  display:flex;align-items:center;justify-content:center;
+  position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.94);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
   opacity:0;visibility:hidden;transition:opacity 0.3s,visibility 0.3s;
 }
-#photoLightbox.show { opacity:1;visibility:visible; }
-#photoLightbox img {
-  max-width:92vw;max-height:85vh;border-radius:12px;
-  object-fit:contain;box-shadow:0 0 60px rgba(0,0,0,0.5);
-}
+#photoLightbox.show{opacity:1;visibility:visible}
+#photoLightbox img{max-width:96vw;max-height:78vh;border-radius:10px;object-fit:contain;box-shadow:0 0 60px rgba(0,0,0,0.5)}
 #photoLightbox .lb-close {
-  position:absolute;top:clamp(10px,2vh,20px);right:clamp(10px,3vw,20px);
-  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);
+  position:absolute;top:calc(16px + var(--safe-top));right:16px;
+  width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);
   background:rgba(0,0,0,0.5);color:#fff;font-size:1.3rem;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-family:inherit;line-height:1;z-index:1;
+  font-family:inherit;line-height:1;z-index:1;touch-action:manipulation;
 }
-.lb-caption {
-  position:absolute;bottom:clamp(20px,4vh,40px);left:50%;transform:translateX(-50%);
-  color:rgba(255,255,255,0.8);font-size:0.9rem;letter-spacing:0.05em;
-  text-align:center;max-width:80vw;
-}
+.lb-caption{position:absolute;bottom:calc(32px + var(--safe-bottom));left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.85);font-size:0.95rem;letter-spacing:0.05em;text-align:center;max-width:85vw}
 
+@keyframes msgIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -268,7 +253,7 @@ body {
 <canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
 
-<!-- 右侧：恋爱纪念日 -->
+<!-- 恋爱纪念日 -->
 <div class="side-panel right">
   <div class="anniversary" id="anniversaryEl">
     <div class="anniversary-label">恋爱纪念日</div>
@@ -278,12 +263,11 @@ body {
   </div>
 </div>
 
-
-	<!-- 入场提问门 -->
-	<div id="gate">
-	  <div class="gate-question">准备好进入我们的专属小屋了嘛？</div>
-	  <button class="gate-btn" id="btnEnter">进入小屋</button>
-	</div>
+<!-- 入场门 -->
+<div id="gate">
+  <div class="gate-question">准备好进入我们的专属小屋了嘛？</div>
+  <button class="gate-btn" id="btnEnter">进入小屋</button>
+</div>
 
 <div class="footer">
   <div class="btn-row">
@@ -303,7 +287,7 @@ body {
 
 <!-- 时光相册遮罩 -->
 <div id="albumOverlay"></div>
-<!-- 时光相册滑出面板 -->
+<!-- 时光相册面板 -->
 <div id="albumPanel">
   <div class="album-header">
     <span class="album-title">📷 时光相册</span>
@@ -329,29 +313,25 @@ body {
 
 <script>
 // ═══════════════════════════════════════════
+//  纪念日计算
+// ═══════════════════════════════════════════
 
-	// 纪念日计算
-	const ANNIVERSARY = new Date(2026, 4, 10); // 2026-05-10
+const ANNIVERSARY = new Date(2026, 4, 10); // 2026-05-10
 
-	function updateAnniversary() {
-	  const now = new Date();
-	  const diffDays = Math.floor((now.getTime() - ANNIVERSARY.getTime()) / 86400000) + 1;
-	  document.getElementById('anniversaryDays').textContent = Math.max(0, diffDays);
-	  document.getElementById('anniversaryDate').textContent = '2026.05.10 起';
-	}
+function updateAnniversary() {
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - ANNIVERSARY.getTime()) / 86400000) + 1;
+  document.getElementById('anniversaryDays').textContent = Math.max(0, diffDays);
+  document.getElementById('anniversaryDate').textContent = '2026.05.10 起';
+}
+updateAnniversary();
 
-	updateAnniversary();
-
-	// 每天午夜刷新
-	function scheduleMidnightRefresh() {
-	  const now = new Date();
-	  const ms = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
-	  setTimeout(() => {
-	    updateAnniversary();
-	    setInterval(updateAnniversary, 86400000);
-	  }, ms + 1000);
-	}
-	scheduleMidnightRefresh();
+function scheduleMidnightRefresh() {
+  const now = new Date();
+  const ms = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+  setTimeout(() => { updateAnniversary(); setInterval(updateAnniversary, 86400000); }, ms + 1000);
+}
+scheduleMidnightRefresh();
 
 // ═══════════════════════════════════════════
 //  爱心粒子动画
@@ -387,7 +367,7 @@ function curve(p) { return (4*Math.sin(4*p))/TAU; }
 
 let frames = [];
 const frameCount = 60;
-const N_HEART = 600, N_CENTER = 3000, N_HALO_BASE = 800;
+const N_HEART = 500, N_CENTER = 2500, N_HALO_BASE = 700;
 
 function buildHeartData() {
   frames = [];
@@ -451,7 +431,6 @@ function renderHeartFrame(fi) {
   lastFrameTime = now;
 
   hCtx.clearRect(0,0,CW,CH);
-
   hCtx.save();
   hCtx.globalAlpha = 0.07;
   const GR = Math.min(CW,CH)*0.28;
@@ -550,10 +529,7 @@ const fwCanvas = document.getElementById('fwCanvas');
 const fwCtx = fwCanvas.getContext('2d');
 let fireworks = [];
 
-function resizeFw() {
-  fwCanvas.width = window.innerWidth;
-  fwCanvas.height = window.innerHeight;
-}
+function resizeFw() { fwCanvas.width = window.innerWidth; fwCanvas.height = window.innerHeight; }
 resizeFw();
 
 class Rocket {
@@ -642,7 +618,7 @@ function showRandomMessage(){
 }
 
 // ═══════════════════════════════════════════
-//  音乐 — A Thousand Years
+//  音乐
 // ═══════════════════════════════════════════
 
 const bgm = document.getElementById('bgm');
@@ -652,21 +628,19 @@ function toggleMusic() {
   if (musicPlaying) {
     bgm.pause();
     musicPlaying = false;
-    document.getElementById('btnMusic').textContent = '🎵 A Thousand Years';
+    document.getElementById('btnMusic').textContent = 'A Thousand Years';
     showToast('音乐已暂停');
   } else {
     bgm.play().then(() => {
       musicPlaying = true;
       document.getElementById('btnMusic').textContent = '🎵 暂停';
       showToast('A Thousand Years ♪');
-    }).catch(() => {
-      showToast('音乐加载失败');
-    });
+    }).catch(() => { showToast('音乐加载失败'); });
   }
 }
 
 // ═══════════════════════════════════════════
-//  入场门 — 点击进入后播放音乐
+//  入场门
 // ═══════════════════════════════════════════
 
 document.getElementById('btnEnter').addEventListener('click', () => {
@@ -714,17 +688,11 @@ document.getElementById('btnStar').addEventListener('click',()=>{
   for(let i=0;i<40;i++) setTimeout(()=>emitSparkles(Math.random()*innerWidth*0.8+innerWidth*0.1,Math.random()*innerHeight*0.35+innerHeight*0.05,4,['#ffd740','#c084fc','#22d3ee']),i*35);
   showToast('满天繁星，不如你眼睛里的光');
 });
-document.getElementById('btnMessage').addEventListener('click',()=>{
-  showRandomMessage();
-});
+document.getElementById('btnMessage').addEventListener('click',()=>{ showRandomMessage(); });
 document.getElementById('btnMusic').addEventListener('click',toggleMusic);
 
 // ═══════════════════════════════════════════
 //  时光相册 — GitHub API 云存储
-//  ⚠️ 去 github.com/settings/tokens 创建 Fine-grained token
-//    只勾选 hzp6957/hello-world-page 仓库
-//    权限: Contents = Read and write
-//    然后填到下面
 // ═══════════════════════════════════════════
 
 const GH_TOKEN = 'github_pat_11CGDGC2Y0l8N6a0GI8Ixq_' + 'L7GyhEYwNvhlNWJiu7f1f7Qs6ly5n9c3JssgJaKU8yUBDLMLREXvxaQfI4F';
@@ -733,12 +701,9 @@ const GH_REPO = 'hello-world-page';
 const GH_BRANCH = 'main';
 const GH_API = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO;
 const INDEX_PATH = 'photos/index.json';
-// raw URL 用来读照片列表和显示图片（无需 token，公开仓库随便读）
 const RAW_BASE = 'https://raw.githubusercontent.com/' + GH_OWNER + '/' + GH_REPO + '/' + GH_BRANCH + '/';
 
-function ghConfigured() {
-  return GH_TOKEN.indexOf('YOUR_') === -1;
-}
+function ghConfigured() { return GH_TOKEN.indexOf('YOUR_') === -1; }
 
 function escHtml(s) {
   var d = document.createElement('div');
@@ -746,58 +711,36 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
-// ═══ 读写 photos/index.json ═══
-
 function loadIndex() {
-  // 加随机参数防止浏览器缓存
   var url = RAW_BASE + INDEX_PATH + '?t=' + Date.now();
-  return fetch(url)
-    .then(function (res) {
-      if (!res.ok) throw new Error(res.status);
-      return res.json();
-    })
-    .catch(function () { return []; });
+  return fetch(url).then(function (res) {
+    if (!res.ok) throw new Error(res.status);
+    return res.json();
+  }).catch(function () { return []; });
 }
 
 function getIndexSha() {
   return fetch(GH_API + '/contents/' + INDEX_PATH, {
     headers: { 'Authorization': 'Bearer ' + GH_TOKEN }
-  })
-    .then(function (res) {
-      if (!res.ok) {
-        if (res.status === 404) return null; // 文件还不存在，正常
-        throw new Error(res.status);
-      }
-      return res.json();
-    })
-    .then(function (data) { return data ? data.sha : null; });
+  }).then(function (res) {
+    if (!res.ok) { if (res.status === 404) return null; throw new Error(res.status); }
+    return res.json();
+  }).then(function (data) { return data ? data.sha : null; });
 }
 
 function saveIndex(photos) {
   var json = JSON.stringify(photos, null, 2);
   var content = btoa(unescape(encodeURIComponent(json)));
-  // 先读到旧的 sha（不存在时 sha 为 null，表示首次创建）
   return getIndexSha().then(function (sha) {
-    var body = {
-      message: '更新相册索引',
-      content: content,
-      branch: GH_BRANCH
-    };
+    var body = { message: '更新相册索引', content: content, branch: GH_BRANCH };
     if (sha) body.sha = sha;
     return fetch(GH_API + '/contents/' + INDEX_PATH, {
       method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + GH_TOKEN,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': 'Bearer ' + GH_TOKEN, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-  }).then(function (res) {
-    if (!res.ok) throw new Error('保存索引失败: ' + res.status);
-  });
+  }).then(function (res) { if (!res.ok) throw new Error('保存索引失败: ' + res.status); });
 }
-
-// ═══ 上传 / 删除 ═══
 
 function uploadFile(file) {
   var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
@@ -809,24 +752,14 @@ function uploadFile(file) {
       var base64 = e.target.result.split(',')[1];
       fetch(GH_API + '/contents/' + path, {
         method: 'PUT',
-        headers: {
-          'Authorization': 'Bearer ' + GH_TOKEN,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: '上传照片 ' + safeName,
-          content: base64,
-          branch: GH_BRANCH
-        })
-      })
-      .then(function (res) {
+        headers: { 'Authorization': 'Bearer ' + GH_TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: '上传照片 ' + safeName, content: base64, branch: GH_BRANCH })
+      }).then(function (res) {
         if (!res.ok) throw new Error('上传失败: ' + res.status);
         return res.json();
-      })
-      .then(function (data) {
+      }).then(function () {
         resolve({ file: safeName, url: RAW_BASE + path });
-      })
-      .catch(reject);
+      }).catch(reject);
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
@@ -836,28 +769,19 @@ function uploadFile(file) {
 function deleteFile(filename) {
   return fetch(GH_API + '/contents/photos/' + filename, {
     headers: { 'Authorization': 'Bearer ' + GH_TOKEN }
-  })
-    .then(function (res) {
-      if (!res.ok) throw new Error(res.status);
-      return res.json();
-    })
-    .then(function (data) {
-      return fetch(GH_API + '/contents/photos/' + filename, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': 'Bearer ' + GH_TOKEN,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: '删除照片 ' + filename,
-          branch: GH_BRANCH,
-          sha: data.sha
-        })
-      });
+  }).then(function (res) {
+    if (!res.ok) throw new Error(res.status);
+    return res.json();
+  }).then(function (data) {
+    return fetch(GH_API + '/contents/photos/' + filename, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + GH_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '删除照片 ' + filename, branch: GH_BRANCH, sha: data.sha })
     });
+  });
 }
 
-// ═══ UI 渲染 ═══
+// ═══ UI ═══
 
 function openLightbox(url, caption) {
   document.getElementById('lbImg').src = url;
@@ -867,12 +791,10 @@ function openLightbox(url, caption) {
 
 function renderAlbum() {
   var grid = document.getElementById('albumGrid');
-
   if (!ghConfigured()) {
     grid.innerHTML = '<div class="album-empty">⚠️ 请先配置 GitHub Token<br><span style="font-size:0.7rem;color:rgba(255,255,255,0.3)">见代码中的 GH_TOKEN</span></div>';
     return;
   }
-
   grid.innerHTML = '<div class="album-empty">加载中...</div>';
   loadIndex().then(function (photos) {
     if (!photos.length) {
@@ -889,13 +811,9 @@ function renderAlbum() {
         '<button class="album-card-del" data-file="' + escHtml(p.file) + '" data-idx="' + i + '" title="删除">✕</button>' +
       '</div>';
     }).join('');
-
     grid.querySelectorAll('.album-card img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        openLightbox(this.dataset.url, this.dataset.caption);
-      });
+      img.addEventListener('click', function () { openLightbox(this.dataset.url, this.dataset.caption); });
     });
-
     grid.querySelectorAll('.album-card-del').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -906,9 +824,7 @@ function renderAlbum() {
         this.disabled = true;
         loadIndex().then(function (photos) {
           photos.splice(idx, 1);
-          return saveIndex(photos).then(function () {
-            return deleteFile(file);
-          });
+          return saveIndex(photos).then(function () { return deleteFile(file); });
         }).then(function () {
           showToast('照片已删除');
           renderAlbum();
@@ -919,9 +835,7 @@ function renderAlbum() {
         });
       });
     });
-  }).catch(function () {
-    grid.innerHTML = '<div class="album-empty">加载失败，请检查网络</div>';
-  });
+  }).catch(function () { grid.innerHTML = '<div class="album-empty">加载失败，请检查网络</div>'; });
 }
 
 function openAlbum() {
@@ -929,7 +843,6 @@ function openAlbum() {
   document.getElementById('albumOverlay').classList.add('show');
   renderAlbum();
 }
-
 function closeAlbum() {
   document.getElementById('albumPanel').classList.remove('open');
   document.getElementById('albumOverlay').classList.remove('show');
@@ -939,7 +852,6 @@ document.getElementById('btnAlbum').addEventListener('click', openAlbum);
 document.getElementById('btnAlbumClose').addEventListener('click', closeAlbum);
 document.getElementById('albumOverlay').addEventListener('click', closeAlbum);
 
-// 灯箱关闭
 document.getElementById('btnLbClose').addEventListener('click', function () {
   document.getElementById('photoLightbox').classList.remove('show');
 });
@@ -955,11 +867,9 @@ document.getElementById('btnAlbumUpload').addEventListener('click', function () 
   var caption = captionInput.value.trim();
   if (!files.length) { showToast('请先选择图片'); return; }
   if (!ghConfigured()) { showToast('请先配置 GitHub Token'); return; }
-
   var btn = this;
   btn.disabled = true;
   btn.textContent = '上传中...';
-
   function uploadNext(i) {
     if (i >= files.length) {
       fileInput.value = '';
@@ -972,32 +882,20 @@ document.getElementById('btnAlbumUpload').addEventListener('click', function () 
       return;
     }
     var file = files[i];
-    if (file.size > 50 * 1024 * 1024) {
-      showToast(file.name + ' 超过50MB，已跳过');
-      uploadNext(i + 1);
-      return;
-    }
+    if (file.size > 50 * 1024 * 1024) { showToast(file.name + ' 超过50MB，已跳过'); uploadNext(i + 1); return; }
     btn.textContent = (i + 1) + '/' + files.length + '...';
     uploadFile(file).then(function (result) {
       return loadIndex().then(function (photos) {
-        photos.unshift({
-          file: result.file,
-          url: result.url,
-          caption: caption || file.name.replace(/\.[^.]+$/, ''),
-          time: Date.now()
-        });
+        photos.unshift({ file: result.file, url: result.url, caption: caption || file.name.replace(/\.[^.]+$/, ''), time: Date.now() });
         return saveIndex(photos);
       });
-    }).then(function () {
-      uploadNext(i + 1);
-    }).catch(function (err) {
+    }).then(function () { uploadNext(i + 1); }).catch(function (err) {
       console.error('upload:', err);
       showToast('上传失败，请重试');
       btn.disabled = false;
       btn.textContent = '上传';
     });
   }
-
   uploadNext(0);
 });
 
@@ -1008,7 +906,10 @@ document.getElementById('albumFile').addEventListener('change', function (e) {
   label.textContent = n === 1 ? (e.target.files[0].name.length > 8 ? e.target.files[0].name.slice(0, 7) + '…' : e.target.files[0].name) : n + ' 张';
 });
 
-// 键盘
+// ═══════════════════════════════════════════
+//  键盘 & 窗口
+// ═══════════════════════════════════════════
+
 window.addEventListener('keydown',e=>{
   switch(e.key.toLowerCase()){
     case'f':launchFireworks(10);showToast('为你绽放！');break;
@@ -1017,7 +918,6 @@ window.addEventListener('keydown',e=>{
   }
 });
 
-// 窗口大小变化
 window.addEventListener('resize', () => {
   resizeHeartCanvas();
   resizeFw();
@@ -1026,10 +926,7 @@ window.addEventListener('resize', () => {
   buildHeartData();
 });
 
-// 启动爱心动画
 renderHeartFrame(0);
-
-// 欢迎烟花
 setTimeout(()=>launchFireworks(4), 800);
 </script>
 </body>
