@@ -700,8 +700,10 @@ const LC_CLASS = 'Album';
 
 function lcReq(path, method, data) {
   const url = LC_SERVER + '/1.1/classes/' + path;
-  const hdrs = { 'X-LC-Id': LC_APP_ID, 'X-LC-Key': LC_APP_KEY };
-  if (data) { hdrs['Content-Type'] = 'application/json'; }
+  const hdrs = new Headers();
+  hdrs.set('X-LC-Id', LC_APP_ID);
+  hdrs.set('X-LC-Key', LC_APP_KEY);
+  if (data) { hdrs.set('Content-Type', 'application/json'); }
   return fetch(url, { method, headers: hdrs, body: data ? JSON.stringify(data) : undefined });
 }
 
@@ -715,9 +717,11 @@ async function loadPhotos() {
 }
 
 async function deletePhoto(id) {
+  const h = new Headers();
+  h.set('X-LC-Id', LC_APP_ID);
+  h.set('X-LC-Key', LC_APP_KEY);
   const res = await fetch(LC_SERVER + '/1.1/classes/' + LC_CLASS + '/' + id, {
-    method: 'DELETE',
-    headers: { 'X-LC-Id': LC_APP_ID, 'X-LC-Key': LC_APP_KEY }
+    method: 'DELETE', headers: h
   });
   if (!res.ok) throw new Error(res.status);
 }
@@ -726,9 +730,12 @@ async function uploadPhoto(file, caption) {
   const name = 'album_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '');
   const form = new FormData();
   form.append('file', file, name);
+  const h2 = new Headers();
+  h2.set('X-LC-Id', LC_APP_ID);
+  h2.set('X-LC-Key', LC_APP_KEY);
   const res = await fetch(LC_SERVER + '/1.1/files/' + name, {
     method: 'POST',
-    headers: { 'X-LC-Id': LC_APP_ID, 'X-LC-Key': LC_APP_KEY },
+    headers: h2,
     body: form
   });
   if (!res.ok) throw new Error(res.status);
