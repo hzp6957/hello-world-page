@@ -764,29 +764,33 @@ function getIndexSha() {
     headers: { 'Authorization': 'Bearer ' + GH_TOKEN }
   })
     .then(function (res) {
-      if (!res.ok) throw new Error(res.status);
+      if (!res.ok) {
+        if (res.status === 404) return null; // 文件还不存在，正常
+        throw new Error(res.status);
+      }
       return res.json();
     })
-    .then(function (data) { return data.sha; });
+    .then(function (data) { return data ? data.sha : null; });
 }
 
 function saveIndex(photos) {
   var json = JSON.stringify(photos, null, 2);
   var content = btoa(unescape(encodeURIComponent(json)));
-  // 先读到旧的 sha
+  // 先读到旧的 sha（不存在时 sha 为 null，表示首次创建）
   return getIndexSha().then(function (sha) {
+    var body = {
+      message: '更新相册索引',
+      content: content,
+      branch: GH_BRANCH
+    };
+    if (sha) body.sha = sha;
     return fetch(GH_API + '/contents/' + INDEX_PATH, {
       method: 'PUT',
       headers: {
         'Authorization': 'Bearer ' + GH_TOKEN,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        message: '更新相册索引',
-        content: content,
-        branch: GH_BRANCH,
-        sha: sha
-      })
+      body: JSON.stringify(body)
     });
   }).then(function (res) {
     if (!res.ok) throw new Error('保存索引失败: ' + res.status);
