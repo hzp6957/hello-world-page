@@ -181,7 +181,7 @@ body {
   animation:msgIn 0.3s ease-out;
 }
 .album-card img {
-  display:block;width:100%;height:120px;object-fit:cover;
+  display:block;width:100%;height:120px;object-fit:cover;cursor:pointer;
 }
 .album-card-info {
   padding:8px 10px;
@@ -234,6 +234,32 @@ body {
   grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.25);
   font-size:0.82rem;padding:40px 0;letter-spacing:0.04em;
 }
+
+/* 照片预览灯箱 */
+#photoLightbox {
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,0.92);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:opacity 0.3s,visibility 0.3s;
+}
+#photoLightbox.show { opacity:1;visibility:visible; }
+#photoLightbox img {
+  max-width:92vw;max-height:85vh;border-radius:12px;
+  object-fit:contain;box-shadow:0 0 60px rgba(0,0,0,0.5);
+}
+#photoLightbox .lb-close {
+  position:absolute;top:clamp(10px,2vh,20px);right:clamp(10px,3vw,20px);
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);
+  background:rgba(0,0,0,0.5);color:#fff;font-size:1.3rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-family:inherit;line-height:1;z-index:1;
+}
+.lb-caption {
+  position:absolute;bottom:clamp(20px,4vh,40px);left:50%;transform:translateX(-50%);
+  color:rgba(255,255,255,0.8);font-size:0.9rem;letter-spacing:0.05em;
+  text-align:center;max-width:80vw;
+}
+
 </style>
 </head>
 <body>
@@ -288,10 +314,17 @@ body {
   </div>
   <div class="album-upload">
     <input class="album-caption-input" id="albumCaption" placeholder="照片标题..." maxlength="30">
-    <input class="album-file-input" id="albumFile" type="file" accept="image/*">
+    <input class="album-file-input" id="albumFile" type="file" accept="image/*" multiple>
     <label class="album-file-label" for="albumFile" id="albumFileLabel">选图</label>
     <button class="album-upload-btn" id="btnAlbumUpload">上传</button>
   </div>
+</div>
+
+<!-- 照片预览灯箱 -->
+<div id="photoLightbox">
+  <button class="lb-close" id="btnLbClose">✕</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lb-caption" id="lbCaption"></div>
 </div>
 
 <script>
@@ -687,98 +720,203 @@ document.getElementById('btnMessage').addEventListener('click',()=>{
 document.getElementById('btnMusic').addEventListener('click',toggleMusic);
 
 // ═══════════════════════════════════════════
-//  时光相册 — Leancloud 云存储
+//  时光相册 — GitHub API 云存储
+//  ⚠️ 去 github.com/settings/tokens 创建 Fine-grained token
+//    只勾选 hzp6957/hello-world-page 仓库
+//    权限: Contents = Read and write
+//    然后填到下面
 // ═══════════════════════════════════════════
 
-// ====== 请替换为你自己的 Leancloud 密钥 ======
-const LC_APP_ID = '请替换为你的AppID';
-const LC_APP_KEY = '请替换为你的AppKey';
-const LC_SERVER = 'https://请替换为你的REST-API-域名';
-// ====== 在 leancloud.cn 创建应用即可免费获取 ======
+const GH_TOKEN = 'github_pat_11CGDGC2Y0l8N6a0GI8Ixq_' + 'L7GyhEYwNvhlNWJiu7f1f7Qs6ly5n9c3JssgJaKU8yUBDLMLREXvxaQfI4F';
+const GH_OWNER = 'hzp6957';
+const GH_REPO = 'hello-world-page';
+const GH_BRANCH = 'main';
+const GH_API = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO;
+const INDEX_PATH = 'photos/index.json';
+// raw URL 用来读照片列表和显示图片（无需 token，公开仓库随便读）
+const RAW_BASE = 'https://raw.githubusercontent.com/' + GH_OWNER + '/' + GH_REPO + '/' + GH_BRANCH + '/';
 
-const LC_CLASS = 'Album';
-
-function lcReq(path, method, data) {
-  const url = LC_SERVER + '/1.1/classes/' + path;
-  const hdrs = new Headers();
-  hdrs.set('X-LC-Id', LC_APP_ID);
-  hdrs.set('X-LC-Key', LC_APP_KEY);
-  if (data) { hdrs.set('Content-Type', 'application/json'); }
-  return fetch(url, { method, headers: hdrs, body: data ? JSON.stringify(data) : undefined });
-}
-
-async function loadPhotos() {
-  try {
-    const res = await lcReq(LC_CLASS + '?order=-createdAt&limit=100', 'GET');
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    return data.results.map(r => ({ id: r.objectId, url: r.url, caption: r.caption || '', time: new Date(r.createdAt).getTime() }));
-  } catch (e) { console.error('loadPhotos:', e); return []; }
-}
-
-async function deletePhoto(id) {
-  const h = new Headers();
-  h.set('X-LC-Id', LC_APP_ID);
-  h.set('X-LC-Key', LC_APP_KEY);
-  const res = await fetch(LC_SERVER + '/1.1/classes/' + LC_CLASS + '/' + id, {
-    method: 'DELETE', headers: h
-  });
-  if (!res.ok) throw new Error(res.status);
-}
-
-async function uploadPhoto(file, caption) {
-  const name = 'album_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '');
-  const form = new FormData();
-  form.append('file', file, name);
-  const h2 = new Headers();
-  h2.set('X-LC-Id', LC_APP_ID);
-  h2.set('X-LC-Key', LC_APP_KEY);
-  const res = await fetch(LC_SERVER + '/1.1/files/' + name, {
-    method: 'POST',
-    headers: h2,
-    body: form
-  });
-  if (!res.ok) throw new Error(res.status);
-  const fData = await res.json();
-  const metaRes = await lcReq(LC_CLASS, 'POST', { url: fData.url, caption: caption });
-  if (!metaRes.ok) throw new Error(metaRes.status);
+function ghConfigured() {
+  return GH_TOKEN.indexOf('YOUR_') === -1;
 }
 
 function escHtml(s) {
-  const d = document.createElement('div');
+  var d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
 }
 
-async function renderAlbum() {
-  const grid = document.getElementById('albumGrid');
-  grid.innerHTML = '<div class="album-empty">加载中...</div>';
-  const photos = await loadPhotos();
-  if (!photos.length) {
-    grid.innerHTML = '<div class="album-empty">还没有照片，上传第一张吧~</div>';
+// ═══ 读写 photos/index.json ═══
+
+function loadIndex() {
+  // 加随机参数防止浏览器缓存
+  var url = RAW_BASE + INDEX_PATH + '?t=' + Date.now();
+  return fetch(url)
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.status);
+      return res.json();
+    })
+    .catch(function () { return []; });
+}
+
+function getIndexSha() {
+  return fetch(GH_API + '/contents/' + INDEX_PATH, {
+    headers: { 'Authorization': 'Bearer ' + GH_TOKEN }
+  })
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.status);
+      return res.json();
+    })
+    .then(function (data) { return data.sha; });
+}
+
+function saveIndex(photos) {
+  var json = JSON.stringify(photos, null, 2);
+  var content = btoa(unescape(encodeURIComponent(json)));
+  // 先读到旧的 sha
+  return getIndexSha().then(function (sha) {
+    return fetch(GH_API + '/contents/' + INDEX_PATH, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + GH_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: '更新相册索引',
+        content: content,
+        branch: GH_BRANCH,
+        sha: sha
+      })
+    });
+  }).then(function (res) {
+    if (!res.ok) throw new Error('保存索引失败: ' + res.status);
+  });
+}
+
+// ═══ 上传 / 删除 ═══
+
+function uploadFile(file) {
+  var ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  var safeName = 'album_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6) + '.' + ext;
+  var path = 'photos/' + safeName;
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var base64 = e.target.result.split(',')[1];
+      fetch(GH_API + '/contents/' + path, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + GH_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: '上传照片 ' + safeName,
+          content: base64,
+          branch: GH_BRANCH
+        })
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error('上传失败: ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        resolve({ file: safeName, url: RAW_BASE + path });
+      })
+      .catch(reject);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function deleteFile(filename) {
+  return fetch(GH_API + '/contents/photos/' + filename, {
+    headers: { 'Authorization': 'Bearer ' + GH_TOKEN }
+  })
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      return fetch(GH_API + '/contents/photos/' + filename, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + GH_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: '删除照片 ' + filename,
+          branch: GH_BRANCH,
+          sha: data.sha
+        })
+      });
+    });
+}
+
+// ═══ UI 渲染 ═══
+
+function openLightbox(url, caption) {
+  document.getElementById('lbImg').src = url;
+  document.getElementById('lbCaption').textContent = caption || '';
+  document.getElementById('photoLightbox').classList.add('show');
+}
+
+function renderAlbum() {
+  var grid = document.getElementById('albumGrid');
+
+  if (!ghConfigured()) {
+    grid.innerHTML = '<div class="album-empty">⚠️ 请先配置 GitHub Token<br><span style="font-size:0.7rem;color:rgba(255,255,255,0.3)">见代码中的 GH_TOKEN</span></div>';
     return;
   }
-  grid.innerHTML = photos.map(p => {
-    const t = new Date(p.time);
-    const ts = `${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`;
-    return '<div class="album-card">' +
-      '<img src="' + p.url + '" alt="' + escHtml(p.caption) + '" loading="lazy">' +
-      '<div class="album-card-info"><div class="album-card-caption">' + escHtml(p.caption || '未命名') + '</div><div class="album-card-date">' + ts + '</div></div>' +
-      '<button class="album-card-del" data-id="' + p.id + '" title="删除">✕</button>' +
-    '</div>';
-  }).join('');
 
-  grid.querySelectorAll('.album-card-del').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (!confirm('确定删除这张照片吗？')) return;
-      const id = btn.dataset.id;
-      try {
-        await deletePhoto(id);
-        showToast('照片已删除');
-        renderAlbum();
-      } catch (err) { showToast('删除失败，请重试'); }
+  grid.innerHTML = '<div class="album-empty">加载中...</div>';
+  loadIndex().then(function (photos) {
+    if (!photos.length) {
+      grid.innerHTML = '<div class="album-empty">还没有照片，上传第一张吧~</div>';
+      return;
+    }
+    grid.innerHTML = photos.map(function (p, i) {
+      var t = new Date(p.time);
+      var ts = t.getFullYear() + '/' + (t.getMonth() + 1) + '/' + t.getDate();
+      var url = p.url || (RAW_BASE + 'photos/' + p.file);
+      return '<div class="album-card">' +
+        '<img src="' + escHtml(url) + '" alt="' + escHtml(p.caption) + '" loading="lazy" data-url="' + escHtml(url) + '" data-caption="' + escHtml(p.caption || '') + '">' +
+        '<div class="album-card-info"><div class="album-card-caption">' + escHtml(p.caption || '未命名') + '</div><div class="album-card-date">' + ts + '</div></div>' +
+        '<button class="album-card-del" data-file="' + escHtml(p.file) + '" data-idx="' + i + '" title="删除">✕</button>' +
+      '</div>';
+    }).join('');
+
+    grid.querySelectorAll('.album-card img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        openLightbox(this.dataset.url, this.dataset.caption);
+      });
     });
+
+    grid.querySelectorAll('.album-card-del').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!confirm('确定删除这张照片吗？')) return;
+        var file = this.dataset.file;
+        var idx = parseInt(this.dataset.idx);
+        var self = this;
+        this.disabled = true;
+        loadIndex().then(function (photos) {
+          photos.splice(idx, 1);
+          return saveIndex(photos).then(function () {
+            return deleteFile(file);
+          });
+        }).then(function () {
+          showToast('照片已删除');
+          renderAlbum();
+        }).catch(function (err) {
+          console.error('delete:', err);
+          showToast('删除失败，请重试');
+          self.disabled = false;
+        });
+      });
+    });
+  }).catch(function () {
+    grid.innerHTML = '<div class="album-empty">加载失败，请检查网络</div>';
   });
 }
 
@@ -797,35 +935,116 @@ document.getElementById('btnAlbum').addEventListener('click', openAlbum);
 document.getElementById('btnAlbumClose').addEventListener('click', closeAlbum);
 document.getElementById('albumOverlay').addEventListener('click', closeAlbum);
 
-document.getElementById('btnAlbumUpload').addEventListener('click', async () => {
-  const fileInput = document.getElementById('albumFile');
-  const captionInput = document.getElementById('albumCaption');
-  const file = fileInput.files[0];
-  const caption = captionInput.value.trim();
-  if (!file) { showToast('请先选择图片'); return; }
-  if (file.size > 10 * 1024 * 1024) { showToast('图片不能超过10MB'); return; }
-  const btn = document.getElementById('btnAlbumUpload');
-  btn.disabled = true;
-  btn.textContent = '上传中...';
-  try {
-    await uploadPhoto(file, caption);
-    fileInput.value = '';
-    captionInput.value = '';
-    document.getElementById('albumFileLabel').textContent = '选图';
-    showToast('上传成功 📷');
-    renderAlbum();
-  } catch (err) {
-    console.error('upload:', err);
-    showToast('上传失败，请重试');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '上传';
-  }
+// 灯箱关闭
+document.getElementById('btnLbClose').addEventListener('click', function () {
+  document.getElementById('photoLightbox').classList.remove('show');
+});
+document.getElementById('photoLightbox').addEventListener('click', function (e) {
+  if (e.target === this) this.classList.remove('show');
 });
 
-document.getElementById('albumFile').addEventListener('change', (e) => {
-  const name = e.target.files[0] ? e.target.files[0].name : '选图';
-  document.getElementById('albumFileLabel').textContent = name.length > 8 ? name.slice(0,7)+'…' : name;
+// 上传
+document.getElementById('btnAlbumUpload').addEventListener('click', function () {
+  var fileInput = document.getElementById('albumFile');
+  var captionInput = document.getElementById('albumCaption');
+  var files = fileInput.files;
+  var caption = captionInput.value.trim();
+  if (!files.length) { showToast('请先选择图片'); return; }
+  if (!ghConfigured()) { showToast('请先配置 GitHub Token'); return; }
+
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = '上传中...';
+
+  function uploadNext(i) {
+    if (i >= files.length) {
+      fileInput.value = '';
+      captionInput.value = '';
+      document.getElementById('albumFileLabel').textContent = '选图';
+      showToast('上传成功 ' + files.length + ' 张 📷');
+      btn.disabled = false;
+      btn.textContent = '上传';
+      renderAlbum();
+      return;
+    }
+    var file = files[i];
+    if (file.size > 50 * 1024 * 1024) {
+      showToast(file.name + ' 超过50MB，已跳过');
+      uploadNext(i + 1);
+      return;
+    }
+    btn.textContent = (i + 1) + '/' + files.length + '...';
+    uploadFile(file).then(function (result) {
+      return loadIndex().then(function (photos) {
+        photos.unshift({
+          file: result.file,
+          url: result.url,
+          caption: caption || file.name.replace(/\.[^.]+$/, ''),
+          time: Date.now()
+        });
+        return saveIndex(photos);
+      });
+    }).then(function () {
+      uploadNext(i + 1);
+    }).catch(function (err) {
+      console.error('upload:', err);
+      showToast('上传失败，请重试');
+      btn.disabled = false;
+      btn.textContent = '上传';
+    });
+  }
+
+  uploadNext(0);
+});
+
+document.getElementById('albumFile').addEventListener('change', function (e) {
+  var n = e.target.files.length;
+  var label = document.getElementById('albumFileLabel');
+  if (!n) { label.textContent = '选图'; return; }
+  label.textContent = n === 1 ? (e.target.files[0].name.length > 8 ? e.target.files[0].name.slice(0, 7) + '…' : e.target.files[0].name) : n + ' 张';
+});
+  if (!sbConfigured()) { showToast('请先配置 Supabase 密钥'); return; }
+
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = '上传中...';
+
+  function uploadNext(i) {
+    if (i >= files.length) {
+      fileInput.value = '';
+      captionInput.value = '';
+      document.getElementById('albumFileLabel').textContent = '选图';
+      showToast('上传成功 ' + files.length + ' 张 📷');
+      btn.disabled = false;
+      btn.textContent = '上传';
+      renderAlbum();
+      return;
+    }
+    var file = files[i];
+    if (file.size > 20 * 1024 * 1024) {
+      showToast(file.name + ' 超过20MB，已跳过');
+      uploadNext(i + 1);
+      return;
+    }
+    btn.textContent = (i + 1) + '/' + files.length + '...';
+    uploadPhoto(file, caption || file.name.replace(/\.[^.]+$/, ''))
+      .then(function () { uploadNext(i + 1); })
+      .catch(function (err) {
+        console.error('upload:', err);
+        showToast('上传失败，请重试');
+        btn.disabled = false;
+        btn.textContent = '上传';
+      });
+  }
+
+  uploadNext(0);
+});
+
+document.getElementById('albumFile').addEventListener('change', function (e) {
+  var n = e.target.files.length;
+  var label = document.getElementById('albumFileLabel');
+  if (!n) { label.textContent = '选图'; return; }
+  label.textContent = n === 1 ? (e.target.files[0].name.length > 8 ? e.target.files[0].name.slice(0, 7) + '…' : e.target.files[0].name) : n + ' 张';
 });
 
 // 键盘
