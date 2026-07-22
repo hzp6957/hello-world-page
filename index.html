@@ -257,7 +257,7 @@ function buildHeartData() {
         arr.push(hx, hy, Math.random()<0.5?1:2);
       }
     }
-	    for (const [px,py] of hpts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*3)+1); }
+	    for (const [px,py] of hpts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
 	    for (const [px,py] of edgePts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
 	    for (const [px,py] of centerPts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
 
