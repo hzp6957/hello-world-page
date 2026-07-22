@@ -11,7 +11,7 @@
 
 body {
   width:100vw;height:100dvh;overflow:hidden;
-  background: url('ac26e54f76f100d46e749a644460caec.jpg') center/cover no-repeat fixed;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('ac26e54f76f100d46e749a644460caec.jpg') center/cover no-repeat fixed;
   font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
   -webkit-tap-highlight-color:transparent;
   user-select:none;-webkit-user-select:none;
@@ -268,7 +268,7 @@ function buildHeartData() {
 }
 buildHeartData();
 
-const HEART_R = 0xff, HEART_G = 0x44, HEART_B = 0x70;
+const HEART_R = 0xff, HEART_G = 0x30, HEART_B = 0x60;
 let imgData, lastFrameTime = 0;
 const FRAME_MS = 44;
 
@@ -284,7 +284,7 @@ function renderHeartFrame(fi) {
 
   hCtx.clearRect(0,0,CW,CH);
   hCtx.save();
-  hCtx.globalAlpha = 0.07;
+  hCtx.globalAlpha = 0.12;
   const GR = Math.min(CW,CH)*0.28;
   const gg = hCtx.createRadialGradient(CX,CY,GR*0.3,CX,CY,GR);
   gg.addColorStop(0, '#ff4470');
