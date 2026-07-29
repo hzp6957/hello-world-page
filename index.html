@@ -690,6 +690,11 @@ function runSpecialFirework(callback) {
 }
 
 document.getElementById('btnEnter').addEventListener('click', () => {
+  // 点进入就播音乐
+  bgm.play().then(function () {
+    musicPlaying = true;
+    document.getElementById('btnMusic').textContent = '🎵 暂停';
+  }).catch(function () {});
   if (isSpecialDay) {
     // 先关入场门
     document.getElementById('gate').classList.add('hidden');
@@ -706,12 +711,8 @@ document.getElementById('btnEnter').addEventListener('click', () => {
       document.querySelector('.footer').style.display = '';
       document.querySelector('.side-panel').style.display = '';
       document.body.style.background = '';
-      bgm.play().then(function () {
-        musicPlaying = true;
-        document.getElementById('btnMusic').textContent = '🎵 暂停';
-        launchFireworks(6);
-        showToast('欢迎回家 ❤️');
-      }).catch(function () {});
+      launchFireworks(6);
+      showToast('欢迎回家 ❤️');
     });
   } else {
     document.getElementById('gate').classList.add('hidden');
