@@ -691,11 +691,21 @@ function runSpecialFirework(callback) {
 
 document.getElementById('btnEnter').addEventListener('click', () => {
   if (isSpecialDay) {
+    // 先关入场门
+    document.getElementById('gate').classList.add('hidden');
+    // 隐藏底部按钮和纪念日
+    document.querySelector('.footer').style.display = 'none';
+    document.querySelector('.side-panel').style.display = 'none';
+    // body 背景临时换成纯黑星空
+    document.body.style.background = '#02030a';
     runSpecialFirework(function () {
-      document.getElementById('gate').classList.add('hidden');
+      // 烟花结束，恢复
       document.getElementById('heartCanvas').style.display = '';
       document.getElementById('sparkleCanvas').style.display = '';
       document.getElementById('fwCanvas').style.display = '';
+      document.querySelector('.footer').style.display = '';
+      document.querySelector('.side-panel').style.display = '';
+      document.body.style.background = '';
       bgm.play().then(function () {
         musicPlaying = true;
         document.getElementById('btnMusic').textContent = '🎵 暂停';
