@@ -128,6 +128,7 @@ body {
 <canvas id="heartCanvas"></canvas>
 <canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
+<canvas id="specialCanvas" style="position:fixed;inset:0;z-index:50;display:none;"></canvas>
 
 <!-- 恋爱纪念日 -->
 <div class="side-panel right">
@@ -490,17 +491,227 @@ function toggleMusic() {
 }
 
 // ═══════════════════════════════════════════
-//  入场门
+//  100天纪念日检测 (2026-08-17)
 // ═══════════════════════════════════════════
+var isSpecialDay = (function () {
+  var qs = new URLSearchParams(window.location.search);
+  if (qs.get('special') === '1') return true; // 预览开关
+  var now = new Date();
+  return now.getFullYear() === 2026 && now.getMonth() === 7 && now.getDate() === 17;
+})();
+
+// ═══════════════════════════════════════════
+//  烟花特效（纪念日专用）
+// ═══════════════════════════════════════════
+var specialCanvas = document.getElementById('specialCanvas');
+var sctx = specialCanvas.getContext('2d');
+
+function runSpecialFirework(callback) {
+  specialCanvas.style.display = 'block';
+  document.getElementById('heartCanvas').style.display = 'none';
+  document.getElementById('sparkleCanvas').style.display = 'none';
+  document.getElementById('fwCanvas').style.display = 'none';
+
+  var SW, SH, SDPR;
+  var sframe = 0;
+  var sphase = 'launch';
+  var srocket = { x: 0, y: 0, targetY: 0, speed: 6, trail: [] };
+  var sparticles = [];
+  var sstars = [];
+  var scolors = ["#ff4470", "#ff6b9d", "#ffb3c6", "#ffd740", "#ffffff", "#fb7185"];
+  var smessage = isSpecialDay ? "祝我们100天快乐" : "祝我们100天快乐";
+
+  function sResize() {
+    SDPR = window.devicePixelRatio || 1;
+    SW = window.innerWidth; SH = window.innerHeight;
+    specialCanvas.width = SW * SDPR;
+    specialCanvas.height = SH * SDPR;
+    specialCanvas.style.width = SW + 'px';
+    specialCanvas.style.height = SH + 'px';
+    sctx.setTransform(SDPR, 0, 0, SDPR, 0, 0);
+  }
+  sResize();
+  srocket.x = SW / 2;
+  srocket.y = SH + 40;
+  srocket.targetY = SH * 0.32;
+
+  for (var i = 0; i < 120; i++) {
+    sstars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.6 + 0.3, alpha: Math.random() * 0.6 + 0.25 });
+  }
+
+  function smakeTextPoints() {
+    var off = document.createElement('canvas');
+    var octx = off.getContext('2d');
+    off.width = SW; off.height = SH;
+    var fontSize = Math.min(SW / 10, 82);
+    octx.fillStyle = '#fff'; octx.textAlign = 'center'; octx.textBaseline = 'middle';
+    octx.font = '700 ' + fontSize + 'px "Microsoft YaHei", "PingFang SC", sans-serif';
+    var textY = SH * 0.46;
+    octx.fillText(smessage, SW / 2, textY);
+    var data = octx.getImageData(0, 0, SW, SH).data;
+    var pts = [];
+    var gap = SW < 520 ? 7 : 6;
+    for (var y = 0; y < SH; y += gap) {
+      for (var x = 0; x < SW; x += gap) {
+        if (data[(y * SW + x) * 4 + 3] > 128) pts.push({ x: x, y: y });
+      }
+    }
+    return pts;
+  }
+
+  function screateExplosion() {
+    var textPts = smakeTextPoints();
+    sparticles = textPts.map(function (pt, j) {
+      var angle = Math.random() * Math.PI * 2;
+      var dist = Math.random() * 220 + 40;
+      return {
+        x: srocket.x + Math.cos(angle) * dist, y: srocket.targetY + Math.sin(angle) * dist,
+        tx: pt.x, ty: pt.y,
+        vx: Math.cos(angle) * (Math.random() * 7 + 2), vy: Math.sin(angle) * (Math.random() * 7 + 2),
+        size: Math.random() * 2.2 + 1.2, color: scolors[j % scolors.length],
+        delay: Math.random() * 40
+      };
+    });
+    sphase = 'forming';
+    sframe = 0;
+  }
+
+  function sdrawStars() {
+    for (var j = 0; j < sstars.length; j++) {
+      var s = sstars[j];
+      sctx.globalAlpha = s.alpha + Math.sin(sframe * 0.03 + s.x) * 0.18;
+      sctx.fillStyle = '#ffffff';
+      sctx.beginPath(); sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); sctx.fill();
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  function sdrawRocket() {
+    srocket.trail.push({ x: srocket.x, y: srocket.y });
+    if (srocket.trail.length > 28) srocket.trail.shift();
+    for (var j = 0; j < srocket.trail.length; j++) {
+      var p = srocket.trail[j];
+      sctx.globalAlpha = j / srocket.trail.length;
+      sctx.fillStyle = '#ffd166';
+      sctx.beginPath(); sctx.arc(p.x, p.y, 3 + j * 0.08, 0, Math.PI * 2); sctx.fill();
+    }
+    sctx.globalAlpha = 1;
+    sctx.fillStyle = '#ffffff';
+    sctx.beginPath(); sctx.arc(srocket.x, srocket.y, 4, 0, Math.PI * 2); sctx.fill();
+    sctx.shadowColor = '#ff4470'; sctx.shadowBlur = 18;
+    sctx.fillStyle = '#ff4470';
+    sctx.beginPath(); sctx.arc(srocket.x, srocket.y + 9, 3, 0, Math.PI * 2); sctx.fill();
+    sctx.shadowBlur = 0;
+  }
+
+  function supdateRocket() {
+    srocket.x = SW / 2 + Math.sin(sframe * 0.08) * 18;
+    srocket.y -= srocket.speed;
+    srocket.speed *= 0.992;
+    if (srocket.y <= srocket.targetY) screateExplosion();
+  }
+
+  function sdrawFlash() {
+    var alpha = Math.max(0, 1 - sframe / 45);
+    if (alpha <= 0) return;
+    var radius = sframe * 7;
+    var g = sctx.createRadialGradient(srocket.x, srocket.targetY, 0, srocket.x, srocket.targetY, radius);
+    g.addColorStop(0, 'rgba(255,255,255,' + alpha + ')');
+    g.addColorStop(0.35, 'rgba(255,209,102,' + (alpha * 0.55) + ')');
+    g.addColorStop(1, 'rgba(255,68,112,0)');
+    sctx.fillStyle = g;
+    sctx.beginPath(); sctx.arc(srocket.x, srocket.targetY, radius, 0, Math.PI * 2); sctx.fill();
+  }
+
+  function sdrawParticles() {
+    for (var j = 0; j < sparticles.length; j++) {
+      var p = sparticles[j];
+      if (sframe < p.delay) continue;
+      var ease = Math.min(1, (sframe - p.delay) / 120);
+      var pull = ease * ease * (3 - 2 * ease);
+      p.x += (p.tx - p.x) * (0.018 + pull * 0.055);
+      p.y += (p.ty - p.y) * (0.018 + pull * 0.055);
+      if (ease < 0.5) { p.x += p.vx * (1 - ease * 2); p.y += p.vy * (1 - ease * 2); }
+      var twinkle = 0.72 + Math.sin(sframe * 0.12 + p.tx * 0.05) * 0.28;
+      sctx.globalAlpha = twinkle; sctx.shadowColor = p.color; sctx.shadowBlur = 10;
+      sctx.fillStyle = p.color;
+      sctx.beginPath(); sctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); sctx.fill();
+      sctx.shadowBlur = 0;
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  function sdrawSparkles() {
+    if (sphase === 'launch') return;
+    for (var j = 0; j < 24; j++) {
+      var angle = (j / 24) * Math.PI * 2 + sframe * 0.01;
+      var r = 110 + Math.sin(sframe * 0.04 + j) * 18;
+      var sx = SW / 2 + Math.cos(angle) * r;
+      var sy = SH * 0.46 + Math.sin(angle) * r * 0.45;
+      sctx.globalAlpha = 0.35; sctx.fillStyle = scolors[j % scolors.length];
+      sctx.beginPath(); sctx.arc(sx, sy, 1.4, 0, Math.PI * 2); sctx.fill();
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  var doneCalled = false;
+  var doneTimer = null;
+
+  function sanimate() {
+    sframe++;
+    sctx.fillStyle = 'rgba(2,3,10,0.18)';
+    sctx.fillRect(0, 0, SW, SH);
+    sdrawStars();
+    if (sphase === 'launch') { supdateRocket(); sdrawRocket(); }
+    else if (sphase === 'forming') {
+      sdrawFlash(); sdrawParticles(); sdrawSparkles();
+      // 粒子成形后 3 秒淡出
+      if (!doneCalled && sframe > 300) {
+        doneCalled = true;
+        doneTimer = setTimeout(function () {
+          var fade = setInterval(function () {
+            var op = parseFloat(specialCanvas.style.opacity || 1);
+            op -= 0.06;
+            if (op <= 0) {
+              clearInterval(fade);
+              specialCanvas.style.display = 'none';
+              specialCanvas.style.opacity = 1;
+              callback();
+            } else {
+              specialCanvas.style.opacity = op;
+            }
+          }, 30);
+        }, 3000);
+      }
+    }
+    requestAnimationFrame(sanimate);
+  }
+  sanimate();
+}
 
 document.getElementById('btnEnter').addEventListener('click', () => {
-  document.getElementById('gate').classList.add('hidden');
-  bgm.play().then(() => {
-    musicPlaying = true;
-    document.getElementById('btnMusic').textContent = '🎵 暂停';
-    launchFireworks(6);
-    showToast('欢迎回家 ❤️');
-  }).catch(() => {});
+  if (isSpecialDay) {
+    runSpecialFirework(function () {
+      document.getElementById('gate').classList.add('hidden');
+      document.getElementById('heartCanvas').style.display = '';
+      document.getElementById('sparkleCanvas').style.display = '';
+      document.getElementById('fwCanvas').style.display = '';
+      bgm.play().then(function () {
+        musicPlaying = true;
+        document.getElementById('btnMusic').textContent = '🎵 暂停';
+        launchFireworks(6);
+        showToast('欢迎回家 ❤️');
+      }).catch(function () {});
+    });
+  } else {
+    document.getElementById('gate').classList.add('hidden');
+    bgm.play().then(function () {
+      musicPlaying = true;
+      document.getElementById('btnMusic').textContent = '🎵 暂停';
+      launchFireworks(6);
+      showToast('欢迎回家 ❤️');
+    }).catch(function () {});
+  }
 });
 
 // ═══════════════════════════════════════════
