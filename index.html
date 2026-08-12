@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>乖乖我爱你</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 <style>
 :root { --bg: #000000; }
 
@@ -11,13 +19,13 @@
 
 body {
   width:100vw;height:100dvh;overflow:hidden;
-  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('ac26e54f76f100d46e749a644460caec.jpg') center/cover no-repeat fixed;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('f91567a6ccbc1a50cea0dcd14415f91a.jpg') center/cover no-repeat fixed;
   font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
   -webkit-tap-highlight-color:transparent;
   user-select:none;-webkit-user-select:none;
 }
 
-#heartCanvas { position:fixed;inset:0;z-index:0; }
+#threeApp { position:fixed;inset:0;z-index:0; }
 #sparkleCanvas { position:fixed;inset:0;z-index:2;pointer-events:none; }
 #fwCanvas { position:fixed;inset:0;z-index:5;pointer-events:none; }
 
@@ -118,17 +126,109 @@ body {
   .gate-btn:hover { transform:translateY(-3px);box-shadow:0 0 60px rgba(255,68,112,0.5); }
 }
 
-@media (max-width:480px) {
-  .btn{padding:10px 14px;font-size:0.8rem}.btn-row{gap:8px}
+    /* 信封 */
+    .envelope {
+      position: fixed;
+      bottom: clamp(80px, 18vh, 140px);
+      right: clamp(16px, 5vw, 40px);
+      z-index: 15;
+      cursor: pointer;
+      filter: drop-shadow(0 4px 16px rgba(255, 180, 140, 0.35));
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s;
+      animation: envelopeFloat 3.5s ease-in-out infinite;
+    }
+    .envelope:hover {
+      transform: scale(1.12);
+      filter: drop-shadow(0 6px 24px rgba(255, 180, 140, 0.55));
+    }
+    .envelope:active { transform: scale(0.94); }
+    @keyframes envelopeFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-6px) rotate(0.8deg); }
+      75% { transform: translateY(-3px) rotate(-0.6deg); }
+    }
+
+    .envelope-svg { display: block; width: clamp(52px, 10vw, 72px); height: auto; }
+
+    /* 留言信 */
+    .letter-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.45s, visibility 0.45s;
+    }
+    .letter-overlay.open { opacity: 1; visibility: visible; }
+
+    .letter-card {
+      background: linear-gradient(160deg, #fff9f0 0%, #fef5e7 40%, #fdf0db 100%);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 40px) clamp(20px, 5vw, 36px);
+      max-width: min(480px, 90vw);
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(180, 130, 80, 0.15);
+      position: relative;
+      animation: letterIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes letterIn {
+      from { transform: translateY(40px) scale(0.92); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .letter-close {
+      position: absolute; top: 12px; right: 16px;
+      background: none; border: none;
+      font-size: 1.5rem; color: #b8a090; cursor: pointer;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, color 0.2s;
+      font-family: inherit; line-height: 1;
+    }
+    .letter-close:hover { background: rgba(0,0,0,0.05); color: #6b5a4a; }
+
+    .letter-title {
+      text-align: center;
+      font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+      font-weight: 700;
+      color: #5a3e2b;
+      margin-bottom: 18px;
+      letter-spacing: 0.06em;
+    }
+    .letter-body {
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      color: #4a3828;
+      line-height: 2;
+      letter-spacing: 0.03em;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .letter-sign {
+      text-align: right;
+      margin-top: 24px;
+      color: #8b6f5a;
+      font-size: 0.92rem;
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width:480px) {
+  .btn{padding:12px 16px;font-size:0.82rem}.btn-row{gap:6px}
+  .toast{font-size:0.82rem;padding:10px 20px}
+  .anniversary{padding:10px 16px;border-radius:14px}
+  .anniversary-label{font-size:0.65rem}
+  .anniversary-days{font-size:1.5rem}
+  .gate-question{font-size:1.05rem;padding:0 20px}
+  .gate-btn{font-size:1rem;padding:14px 42px}
 }
-</style>
+  </style>
 </head>
 <body>
 
-<canvas id="heartCanvas"></canvas>
+<div id="threeApp" style="position:fixed;inset:0;z-index:0;"></div>
 <canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
-<canvas id="specialCanvas" style="position:fixed;inset:0;z-index:50;display:none;"></canvas>
 
 <!-- 恋爱纪念日 -->
 <div class="side-panel right">
@@ -157,177 +257,508 @@ body {
   <div class="toast" id="toast">点击爱心有惊喜 · 按F放烟花</div>
 </div>
 
+<!-- 信封按钮（进入小屋后显示） -->
+<div class="envelope" id="envelopeEl" style="display:none;">
+  <svg class="envelope-svg" viewBox="0 0 72 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1" y="10" width="70" height="44" rx="4" fill="#f5e6d3" stroke="#c8a882" stroke-width="1.5"/>
+    <path d="M2 14L36 36L70 14" fill="#faf3e6" stroke="#c8a882" stroke-width="1.5"/>
+    <path d="M2 14L36 36" stroke="#c8a882" stroke-width="1" fill="none"/>
+    <path d="M70 14L36 36V54L70 14Z" fill="#e8d5bc" stroke="#c8a882" stroke-width="1"/>
+    <circle cx="36" cy="34" r="4" fill="#e07b7b"/>
+  </svg>
+</div>
+
+<!-- 留言信弹窗 -->
+<div class="letter-overlay" id="letterOverlay">
+  <div class="letter-card">
+    <button class="letter-close" id="letterClose">&times;</button>
+    <div class="letter-title">写给我最爱的乖乖</div>
+    <div class="letter-body" id="letterContent">    <div class="letter-body" id="letterContent">哇哦，一下子就一百天了呢！我的乖乖，我的老婆，我的小周姐姐，一百天快乐！耶耶耶！
+
+写下这个数字的时候，我自己都愣了一下。一百天，听起来好像很长，但回想起来又觉得好短。短到我还记得第一次见你时心跳漏拍的感觉，记得第一次牵你手时手心微微的汗，记得你说"好"的那一瞬间我脑子里炸开的烟花。可是它也长到足够让我习惯了每天醒来第一个想到你，睡前最后一个念的也是你，习惯了把你挂在嘴边、放在心尖上。
+
+不能陪在你身边一起度过这个挺有意义的日子，说不可惜是假的，说不痛苦那是假的～再过两天就是七夕了，提前祝我的乖乖七夕快乐！这两个特殊的日子连在一起，要是能牵着你的手一起过，那该有多好啊。想到这儿，心里确实有点痒痒的，像有一只小爪子在那儿轻轻挠。不过也没关系，因为我早就做好了准备——以后的以后，我会天天缠着你，天天和你在一起，度过每一个平凡或特殊的日子。这可不是画大饼，这是我已经在心里规划了无数遍的未来。我想象过很多很多次那样的画面：每天早上醒来第一眼看到你，一起刷牙的时候在镜子里冲你做鬼脸，晚上窝在沙发里抢遥控器，或者什么都不做，就是安安静静地靠在一起。光是想想，就觉得日子都变甜了。
+
+乖乖之前问我，回来之后要不要补上这个纪念日？我说我们以后还会有很多很多的纪念日。其实我是觉得，我们没有必要为了打翻的牛奶哭泣，错过就错过啦。每一个错过，都让下一次相见变得更有期待，不是吗？而且，就算没办法陪在你身边，我也找到了其他庆祝的办法，嘿嘿。虽然可能有点简陋，但真的花了我不少心思呢！这束花是纯代码写的，六百多行，嘿嘿，厉不厉害呀你小乖？虽然它不完美，小乖的技术还是差了点，只会简单拼凑，修修补补的全是漏洞。实在不行让AI帮我改，结果它越改越离谱，最后还是自己老老实实一行一行地写。不过没关系，哪怕它不够完美，里面藏着的每一行代码、每一个字符，都是我在无数个想你的夜晚敲出来的。
+
+其实今天也就是普通的一天啦，太阳照常升起，风照常吹，只是我们给它赋予了特殊的意义。但你知道吗，我觉得哪怕是特殊的日子，也可以用普通的方式去过；普通的一天，也可以拿来庆祝。就像这个网站，其实平时我也有在加工，并不是只有特殊日子才用来讨好你的哦，略略略。我平时没事就会琢磨着给它加点小功能，改改小细节，有时候是一个新的动画，有时候是一句藏起来的话，每次想到你可能会喜欢，会惊喜，我就会忍不住多花点时间。这个网站就像是我们的小家，我一点点地把它布置成你喜欢的样子，哪怕你暂时不在身边，我也在用心打理着我们的回忆。我想让你回来的时候，看到一个被你填满的世界。
+
+打字写情书的感觉傻傻的，哈哈哈哈哈，好奇怪的感觉，居然不知道说什么好。可恶啊，总想着将满腹的墨水全部倾倒出来，可我不是鱿鱼，虽然我有时候确实挺忧郁的。想把满腹经纶倾倒出来，可我也不是蜘蛛，虽然我也算是只猪——乖乖的专属小笨猪。哎呀，我居然能想出来这么牛批的谐音梗，我自己都佩服自己，哈哈哈哈哈。其实说真的，我嘴有点笨，不太会说那些花里胡哨的漂亮话，那些文采飞扬的句子我憋半天也憋不出来。但我想让你知道，我所有词穷的时刻，都是因为太在乎你，怕自己说得不够好，怕不能把你心里的爱意完完整整地表达出来。所以如果有些话说得磕磕绊绊，那一定是因为里面装着太多真心。
+
+43天没见着我了，我去了，怎么这么久了，可真是想死我了。哦不对，应该说我每天都有认真想你哟，哈哈哈哈，乖乖写给我的信里的，还记得吗？头发丝想你，眼睛想你，鼻子想你，嘴巴想你，脑子想你，脖子想你，身子想你，肚肚想你，小小何想你，腿想你，jio也想你。全身上下每一个细胞都在想你，连呼吸都是想你的频率。吃饭的时候在想你是不是也好好吃饭了，睡觉的时候在想你是不是也盖好被子了。走在路上看到好看的云、吹到舒服的风，第一反应都是"要是你在就好了"。这种想念不是轰轰烈烈的，而是像空气一样，无时无刻不在包围着我。它很安静，但无处不在。
+
+其实想想也挺牛逼的。认识了这么好一个女孩，长得如此权威，对我这么好，偏偏还让我成功追上了你。你也挺牛逼的，哈哈哈哈哈，遇到了这么帅的我，你不觉得小乖我超级无敌帅吗？我有时候会偷偷庆幸，庆幸自己当初没有怂，没有退缩，没有因为害怕而错过你。这个世界这么大，人这么多，我们能刚好对上频率，刚好互相喜欢，这本身就是一件比中彩票概率还低的事。而我居然做到了，我觉得自己简直是全世界最幸运的人。
+
+不知道乖乖看到我用这种方式扯这么多流水账会有什么想法。要是在我身边，不得扑上来亲死我啊？不敢想不敢想，那得多爽啊，哈哈哈哈哈。下次可不可以真的亲死我啊？那我做鬼都风流了，嘿嘿。其实我不光想被你亲，我还想抱着你，想把脸埋在你的颈窝里闻你身上的味道，想牵着你的手去逛超市为"今晚吃什么"争论半天，想和你窝在沙发上看一部烂俗的电影然后一起吐槽，想做所有平凡又温暖的小事。那些在别人看来微不足道的事情，和你一起做就会变得闪闪发光。
+
+我时常觉得我的乖乖怎么这么可爱，很需要我，现在有什么都愿意跟我说，我们的关系越来越近，心也越来越近，嘻嘻。但是乖乖，我觉得现在唯一不太好的地方，就是你总是自我否定，一点也不自信，哼，我夸张了一些，但真的有点心疼。我希望乖乖可以更加自信一些，对于各个方面都要自信。我也会多夸夸我的乖乖，我最棒最棒的老婆大人。你在我眼里就是最好的，不需要和别人比，也不需要达到什么标准。你做你自己，就已经足够让我心动一万次了。以后不许再说自己不好，不然我真的会生气的哦，我生气起来可是很吓人的，我会……我会一直亲你直到你改口为止。
+
+还有就是吧，可能是我给乖乖的安全感不足？乖乖总是一遍又一遍地确定我对你的爱，确定这份感情没有让你内耗。但其实这个挺无解的，哈哈哈哈哈，因为我自己也会这样，担心乖乖为我操心，担心乖乖为我内耗。我们都是那种害怕给对方添麻烦的人，却偏偏都想为对方承担一切。但我也会更爱你，越来越爱你，爱死你，让你确定我对你的爱意，一遍不够就说两遍，两遍不够就说一辈子。我希望有一天，我们可以再也不用担心对方的离开，不用因为对方不在身边而难过。我会用行动告诉你，我不是说说而已，我是真的会一直在。你不用反复确认，因为我的心已经交给你了。
+
+这些文字其实是很多天慢慢打出来的，大概提前了半个多月吧，每天打一小段，想到什么写什么。所以有些内容乖乖会觉得在聊天时聊到过，可能那些就是那天写的，哈哈哈哈哈。我也不知道这篇的主旨要确定为什么，暂且定为"杂文"吧，嘿嘿。我也不想搞得文绉绉的，许久没见着我的乖乖，心里全是念想，哪还顾得上什么文采。你不觉得这样就像平常发微信一样随意的言语，听起来很亲切嘛？就像我正坐在你旁边，有一搭没一搭地跟你说话。
+
+其实最主要的是我忍不住。我超级想告诉你我在干嘛干嘛，你也知道我的性格，有点事情根本憋不了，巴不得你马上知道然后夸夸我。这真是憋得难受，主要是做这个网站太早了，距离100天还有好一阵，天天憋得我浑身刺挠，像揣着一只活蹦乱跳的兔子。我真的好爱好爱你，想对你掏心掏肺，实在是忍不住。当你现在看到这里的时候，可不可以去微信给我发一个"我好爱好爱你小乖"？嘻嘻，我就知道你看到这里啦，我的小聪明又得逞了。
+
+额，你这个坏女人欺负我，逗我玩，我要专门拿一段话写你！可恶啊，其实你以为是你不小心发现我眼镜里面的文字了嘛？嘿嘿，又是我的小心机哟，因为我憋不住，哈哈哈哈哈！我想让你知道，但是又不能让你直接知道，所以给你透露一点点。我不能直接说我在给你写东西嘛，正好看到我的眼镜里面有我们视频的画面，诶嘿，那就这样给你看看。这个叫欲擒故纵，乖乖，哈哈哈哈哈。但是你也欺负我了，不让我回去给你看，虽然我没回去就给你看了，诶嘿嘿嘿。没想到吧，没想到吧，略略略。好吧我并不准备删掉前面这段话，既然让你知道了这封信的存在，那我要更放肆了。反正脸已经丢完了，干脆破罐子破摔，把想说的都说出来。
+
+可恶，怎么写着写着写成日记了？不行不行，我有自己的节奏。但转念一想，这封信本来就是我对你说的所有话的合集，什么格式什么章法都不重要，重要的是每一个字都是真的。
+
+乖乖在学校最后一两周待得不太顺心，我都知道的。可能是下学期的压力，可能是上班的各种细碎琐事，也可能什么都不为，就是莫名地觉得闷。但是我不在你身边，唯一能为你做的可能就只有陪陪你了，隔着屏幕听你说说话，或者就那么安静地挂着视频各做各的事。不过幸好乖乖有很好的朋友，听到你和雪姐还有锅锅玩得很开心，我也为你感到高兴，嘿嘿嘿。压力存在心里，释放出来就好啦。但是乖乖你要记得，你一直都有我，不管什么时候，什么事情，只要你需要，我都在。有一说一，感觉自己已经是无药可医了，这两天乖乖没怎么陪我，我想你想得像心上有虫子在爬，又痒又难受，哈哈哈哈哈。朋友，解药给一点的呢，脑子都变成小周姐姐的形状了。这段时间乖乖真的辛苦了，到处跑来跑去照顾阿姨，真的很厉害哦，是我的好榜样呢。我知道你很累，也很心疼你，但我更为你骄傲，因为你总是能把事情做得很好。只是别忘了，你不用一直坚强，在我面前你可以做回小孩，可以撒娇，可以喊累，可以倒下，我会接住你所有的情绪，给你揉揉肩膀，告诉你一切都会好起来的。
+
+乖乖总是说，如果以后怎么怎么样，我没那么好，你没那么好，我还会不会爱你？其实答案一直都很简单：得之坦然，失之淡然，顺其自然，争其必然。落子无悔罢了，既然选择了你，那就是最好的选择。不要在对答案的时候，去责备没有选择另一个选项的自己呀。得之我幸，失之我命，遇到乖乖是我这些年最幸运的事情了，没有之一。把握好这个机会，对你好，你也对我好，我们有了以后，这是命中注定。如果我们没能把握好老天爷给的机会，那也只能证明我们做得不够好。从来都没有谁欠谁什么的，只是我爱你，正好你也爱我。不必为此感到焦虑，我听人说，提前焦虑等于贷款吃屎呢，哈哈哈哈哈。我们不需要预设那么多困难，只需要过好当下的每一天，把每一个今天都过得值得回忆，未来自然会给我们最好的答案。
+
+世界都这么大了，还是让我碰到了你，屌不屌。几十亿人里，我偏偏走向了你，你偏偏答应了我，这不是奇迹是什么。其实写到这里，已经有些词穷，却总觉得不该就这样结束。我还有好多好多话想说，但它们都堵在喉咙里，变成了一个名字——你的名字。
+
+窗外好大的雨，给我下醒了，想你。窗外好大的太阳，给我晒醒了，想你，想你，想你。雨天想你，晴天也想你，所有的天气都是想你的天气。很抱歉不能在你身边陪伴你，但我的心早就飞到你那里去了。现阶段的我也无法承诺乖乖什么太具体的东西，但我可以承诺一件事：我的心从今往后都是你的。只希望之后的我们可以一直一直在一起，一直不分开，互相陪伴着度过坦途也好，泥泞也罢。牵着你的手，我就什么都不怕。
+
+我去了，写的好肉麻，我受不了了，写的出来这些文字我也是神人了。
+
+一百个日夜的惦念只是开始，我对你的爱可没有期限。只要是和你，所有的等待都值得，所有的思念都有意义。
+
+乖乖，一百天快乐，七夕快乐，以后的每一天都快乐。我爱你，不止今天，不止这一百天，而是往后的岁岁年年。
+
+</div></div>
+    <div class="letter-sign">—— 爱你的小乖</div>
+  </div>
+</div>
+
 <audio id="bgm" preload="auto" loop style="display:none">
   <source src="a-thousand-years.mp3" type="audio/mpeg">
 </audio>
 
 
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+window._THREE = THREE;
+window._OrbitControls = OrbitControls;
+</script>
 <script>
 // ═══════════════════════════════════════════
 //  纪念日计算
 // ═══════════════════════════════════════════
 
-const ANNIVERSARY = new Date(2026, 4, 10); // 2026-05-10
+var ANNIVERSARY = new Date(2026, 4, 10); // 2026-05-10
 
 function updateAnniversary() {
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - ANNIVERSARY.getTime()) / 86400000) + 1;
+  var now = new Date();
+  var diffDays = Math.floor((now.getTime() - ANNIVERSARY.getTime()) / 86400000) + 1;
   document.getElementById('anniversaryDays').textContent = Math.max(0, diffDays);
   document.getElementById('anniversaryDate').textContent = '2026.05.10 起';
 }
 updateAnniversary();
 
 function scheduleMidnightRefresh() {
-  const now = new Date();
-  const ms = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+  var now = new Date();
+  var ms = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
   setTimeout(() => { updateAnniversary(); setInterval(updateAnniversary, 86400000); }, ms + 1000);
 }
 scheduleMidnightRefresh();
 
 // ═══════════════════════════════════════════
-//  爱心粒子动画
+//  3D 洋桔梗花束
 // ═══════════════════════════════════════════
 
-const heartCanvas = document.getElementById('heartCanvas');
-const hCtx = heartCanvas.getContext('2d');
+var bouquetContainer = document.getElementById('threeApp');
+var bouquetScene, bouquetCamera, bouquetRenderer, bouquetControls, bouquetGroup;
 
-let CW, CH, CX, CY, IMAGE_ENLARGE;
-function resizeHeartCanvas() {
-  heartCanvas.width = CW = window.innerWidth;
-  heartCanvas.height = CH = window.innerHeight;
-  CX = CW / 2; CY = CH / 2;
-  IMAGE_ENLARGE = Math.min(CW, CH) * 0.026;
-}
-resizeHeartCanvas();
+function initBouquet() {
+  var app = bouquetContainer;
+  var W = window.innerWidth, H = window.innerHeight;
+  var THREE = window._THREE;
+  var OrbitControls = window._OrbitControls;
 
-const TAU = Math.PI * 2;
+  bouquetScene = new THREE.Scene();
+  bouquetScene.background = null;
 
-function heartXY(t, sr) {
-  const x = 17 * Math.pow(Math.sin(t), 3);
-  const y = -(16*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
-  return [x * sr + CX, y * sr + CY];
-}
+  bouquetCamera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+  // 手机屏幕窄，花束需要更远距离才能看到全貌
+  var isMobile = Math.min(W, H) < 520;
+  var camDist = isMobile ? 14.5 : 11.8;
+  var camY = isMobile ? 1.8 : 2.5;
+  bouquetCamera.position.set(0, camY, camDist);
 
-function scatterXY(x, y, beta) {
-  const rx = -beta * Math.log(Math.random());
-  const ry = -beta * Math.log(Math.random());
-  return [x - rx*(x-CX), y - ry*(y-CY)];
-}
+  bouquetRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  bouquetRenderer.setSize(W, H);
+  bouquetRenderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 2 : 2));
+  bouquetRenderer.shadowMap.enabled = true;
+  bouquetRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  app.appendChild(bouquetRenderer.domElement);
 
-function curve(p) { return (4*Math.sin(4*p))/TAU; }
+  bouquetControls = new OrbitControls(bouquetCamera, bouquetRenderer.domElement);
+  bouquetControls.enableDamping = true;
+  bouquetControls.dampingFactor = 0.06;
+  bouquetControls.target.set(0, 0.5, 0);
+  bouquetControls.minDistance = isMobile ? 8 : 6;
+  bouquetControls.maxDistance = isMobile ? 20 : 14;
+  bouquetControls.enablePan = false;
 
-let frames = [];
-const frameCount = 60;
-const N_HEART = 500, N_CENTER = 2500, N_HALO_BASE = 700;
+  bouquetScene.add(new THREE.AmbientLight(0xfff3dd, 1.05));
 
-function buildHeartData() {
-  frames = [];
-  const hpts = [], edgePts = [], centerPts = [];
+  var keyLight = new THREE.DirectionalLight(0xffefc7, 2.6);
+  keyLight.position.set(4.8, 7.5, 5);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(isMobile ? 1024 : 2048, isMobile ? 1024 : 2048);
+  bouquetScene.add(keyLight);
 
-  for (let i = 0; i < N_HEART; i++) hpts.push(heartXY(Math.random()*TAU, IMAGE_ENLARGE));
-  for (const [px,py] of hpts) for (let k=0;k<3;k++) edgePts.push(scatterXY(px,py,0.05));
-  for (let i=0;i<N_CENTER;i++) {
-    const [hx,hy] = hpts[Math.floor(Math.random()*N_HEART)];
-    centerPts.push(scatterXY(hx,hy,0.27));
+  var fillLight = new THREE.DirectionalLight(0xd6deff, 1.2);
+  fillLight.position.set(-5, 4, 4);
+  bouquetScene.add(fillLight);
+
+  var rimLight = new THREE.DirectionalLight(0xb7c8ff, 1.25);
+  rimLight.position.set(-4, 3, -5);
+  bouquetScene.add(rimLight);
+
+  var glowLight = new THREE.PointLight(0xffe2a6, 1.2, 8);
+  glowLight.position.set(0, 1.5, 3.2);
+  bouquetScene.add(glowLight);
+
+  bouquetGroup = new THREE.Group();
+  bouquetGroup.position.y = 0.32;
+  bouquetGroup.rotation.y = -0.16;
+  bouquetScene.add(bouquetGroup);
+
+  function localRand(min, max) { return min + Math.random() * (max - min); }
+  var localTR = THREE;
+  var localOC = OrbitControls;
+
+  function localCylinderBetween(start, end, radius, material, radial) {
+    radial = radial || 10;
+    var dir = new localTR.Vector3().subVectors(end, start);
+    var len = dir.length();
+    var geo = new localTR.CylinderGeometry(radius, radius, len, radial);
+    var mesh = new localTR.Mesh(geo, material);
+    mesh.position.copy(start).add(end).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new localTR.Vector3(0, 1, 0), dir.normalize());
+    mesh.castShadow = true;
+    return mesh;
   }
 
-  function forceCalc(px, py, ratio, jitter) {
-    const d = 1 / Math.pow((px-CX)*(px-CX)+(py-CY)*(py-CY), 0.42);
-    const jh = jitter >> 1;
-    return [px - ratio*d*(px-CX) - (Math.floor(Math.random()*jitter)-jh),
-            py - ratio*d*(py-CY) - (Math.floor(Math.random()*jitter)-jh)];
-  }
-
-  for (let f = 0; f < frameCount; f++) {
-    const t = f / frameCount;
-    const ratio = 15 * curve(t * TAU);
-    const haloR = Math.floor(4 + 6*(1+curve(t*TAU)));
-    const haloN = Math.floor(N_HALO_BASE + 1000*Math.abs(curve(t*TAU)**2));
-    const arr = [];
-
-    const haloSet = {};
-    for (let i = 0; i < haloN; i++) {
-      let [hx,hy] = heartXY(Math.random()*TAU, -15);
-      const ds = (hx-CX)*(hx-CX)+(hy-CY)*(hy-CY);
-      const fr = -1/Math.pow(ds, 0.6);
-      hx -= fr*haloR*(hx-CX); hy -= fr*haloR*(hy-CY);
-      const k = Math.round(hx)+','+Math.round(hy);
-      if (!haloSet[k]) { haloSet[k]=1;
-        hx += Math.floor(Math.random()*121)-60;
-        hy += Math.floor(Math.random()*121)-60;
-        arr.push(hx, hy, Math.random()<0.5?1:2);
+  function localMakePetal(w, l, cup, curl, wave) {
+    wave = wave || 0.04;
+    var segX = 10, segY = 18;
+    var vertices = [], uvs = [], indices = [];
+    for (var y = 0; y <= segY; y++) {
+      var v = y / segY;
+      var taper = Math.sin(v * Math.PI * 0.92);
+      var localW = w * (0.22 + taper * 0.95) * (1 - v * 0.08);
+      for (var x = 0; x <= segX; x++) {
+        var u = x / segX;
+        var side = (u - 0.5) * 2;
+        var sx = side * localW * 0.5, sy = v * l;
+        var ew = Math.sin(v * Math.PI * 5.2 + side * 2.4) * wave * Math.abs(side);
+        var z = Math.sin(v * Math.PI) * cup + side * side * cup * 0.42 - v * v * curl + ew;
+        vertices.push(sx, sy, z);
+        uvs.push(u, v);
       }
     }
-	    for (const [px,py] of hpts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
-	    for (const [px,py] of edgePts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
-	    for (const [px,py] of centerPts) { const [x,y]=forceCalc(px,py,ratio,3); arr.push(x,y,Math.floor(Math.random()*2)+1); }
-
-    frames.push(arr);
-  }
-}
-buildHeartData();
-
-const HEART_R = 0xff, HEART_G = 0x30, HEART_B = 0x60;
-let imgData, lastFrameTime = 0;
-const FRAME_MS = 44;
-
-function renderHeartFrame(fi) {
-  if (!frames.length) return requestAnimationFrame(()=>renderHeartFrame(fi));
-
-  const now = performance.now();
-  if (now - lastFrameTime < FRAME_MS) {
-    requestAnimationFrame(()=>renderHeartFrame(fi));
-    return;
-  }
-  lastFrameTime = now;
-
-  hCtx.clearRect(0,0,CW,CH);
-  hCtx.save();
-  hCtx.globalAlpha = 0.12;
-  const GR = Math.min(CW,CH)*0.28;
-  const gg = hCtx.createRadialGradient(CX,CY,GR*0.3,CX,CY,GR);
-  gg.addColorStop(0, '#ff4470');
-  gg.addColorStop(0.5, 'rgba(255,68,112,0.18)');
-  gg.addColorStop(1, 'transparent');
-  hCtx.fillStyle = gg;
-  hCtx.fillRect(0,0,CW,CH);
-  hCtx.restore();
-
-  const pts = frames[fi % frameCount];
-  if (!pts) { requestAnimationFrame(()=>renderHeartFrame(fi)); return; }
-
-  imgData = imgData || hCtx.createImageData(CW, CH);
-  const buf = imgData.data;
-  const len4 = CW*CH*4;
-  for (let i=3;i<len4;i+=4) { buf[i]=0; buf[i-1]=0; buf[i-2]=0; }
-
-  for (let i=0;i<pts.length;i+=3) {
-    const x=pts[i]|0, y=pts[i+1]|0, s=pts[i+2]|0;
-    for (let dy=0;dy<s;dy++) {
-      const row=y+dy; if (row<0||row>=CH) continue;
-      const off=row*CW*4;
-      for (let dx=0;dx<s;dx++) {
-        const col=x+dx; if (col<0||col>=CW) continue;
-        const idx=off+col*4;
-        buf[idx]=HEART_R; buf[idx+1]=HEART_G; buf[idx+2]=HEART_B; buf[idx+3]=255;
+    for (var y = 0; y < segY; y++) {
+      for (var x = 0; x < segX; x++) {
+        var a = y * (segX + 1) + x, b = a + 1, c = a + segX + 1, d = c + 1;
+        indices.push(a, c, b, b, c, d);
       }
     }
+    var geo = new localTR.BufferGeometry();
+    geo.setAttribute("position", new localTR.Float32BufferAttribute(vertices, 3));
+    geo.setAttribute("uv", new localTR.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    return geo;
   }
-  hCtx.putImageData(imgData,0,0);
 
-  requestAnimationFrame(()=>renderHeartFrame(fi+1));
+  function localVeinGeom(w, l) {
+    var pts = [];
+    pts.push(new localTR.Vector3(0, 0.08 * l, 0.018));
+    pts.push(new localTR.Vector3(0, 0.94 * l, 0.028));
+    for (var i = 0; i < 4; i++) {
+      var v = 0.28 + i * 0.14, y = v * l;
+      var spread = w * (0.16 + i * 0.04);
+      pts.push(new localTR.Vector3(0, y, 0.022));
+      pts.push(new localTR.Vector3(spread, y + l * 0.12, 0.024));
+      pts.push(new localTR.Vector3(0, y, 0.022));
+      pts.push(new localTR.Vector3(-spread, y + l * 0.12, 0.024));
+    }
+    return new localTR.BufferGeometry().setFromPoints(pts);
+  }
+
+  function localAddPetal(parent, opts) {
+    var g = new localTR.Group();
+    var petal = new localTR.Mesh(localMakePetal(opts.w, opts.l, opts.cup, opts.curl), opts.mat);
+    petal.castShadow = true; petal.receiveShadow = true;
+    var veins = new localTR.LineSegments(localVeinGeom(opts.w, opts.l),
+      new localTR.LineBasicMaterial({ color: 0xb9bdd4, transparent: true, opacity: 0.28 }));
+    g.add(petal); g.add(veins);
+    g.position.set(Math.cos(opts.a) * opts.r, Math.sin(opts.a) * opts.r, opts.lift);
+    g.rotation.z = opts.a - Math.PI / 2;
+    g.rotation.x = opts.open;
+    g.rotation.y = (opts.twist || 0) + Math.sin(opts.a) * 0.12;
+    parent.add(g);
+  }
+
+  function localCreateFlower(opts) {
+    var f = new localTR.Group();
+    f.position.set(opts.x, opts.y, opts.z);
+    f.rotation.set(opts.tx || 0, opts.ty || 0, opts.rz || 0);
+    f.scale.setScalar(opts.sc || 1);
+    var ctr = new localTR.Mesh(new localTR.SphereGeometry(0.13, 24, 16),
+      new localTR.MeshPhysicalMaterial({ color: 0xffe98a, roughness: 0.48, clearcoat: 0.18 }));
+    ctr.scale.set(1.15, 1.15, 0.45); ctr.position.z = 0.05; ctr.castShadow = true;
+    f.add(ctr);
+
+    var petalMat = opts.cool ? matPetalCool : matPetalWarm;
+    for (var i = 0; i < 6; i++) {
+      localAddPetal(f, { a: i/6*Math.PI*2+0.25, r:0.06, w:0.22, l:0.44, cup:0.075, curl:0.045, lift:0.02, open:-0.46, mat:petalMat, twist: localRand(-0.08,0.08) });
+    }
+    for (var ly = 0; ly < 4; ly++) {
+      var cnt = 7 + ly*3, rad = 0.16 + ly*0.13;
+      var pw = 0.34 + ly*0.07, pl = 0.56 + ly*0.12;
+      var op = -0.66 - ly*0.18;
+      for (var j = 0; j < cnt; j++) {
+        var ang = j/cnt*Math.PI*2 + ly*0.47;
+        localAddPetal(f, { a:ang, r:rad, w:pw, l:pl, cup:0.12+ly*0.025, curl:0.11+ly*0.035, lift:ly*0.035, open:op, mat:petalMat, twist: localRand(-0.16,0.16) });
+      }
+    }
+    bouquetGroup.add(f);
+    bouquetGroup.add(localCylinderBetween(
+      new localTR.Vector3(opts.x, opts.y-0.35, opts.z),
+      new localTR.Vector3(0, -3.25, 0), 0.022*(opts.sc||1), matStem
+    ));
+    return f;
+  }
+
+  function localLeaf(x, y, z, s, rx, ry, rz) {
+    var leaf = new localTR.Mesh(localMakePetal(0.32, 0.82, 0.045, 0.02, 0.015), matLeaf);
+    leaf.position.set(x, y, z); leaf.rotation.set(rx, ry, rz); leaf.scale.setScalar(s);
+    leaf.castShadow = true; bouquetGroup.add(leaf);
+  }
+
+  function localBabyBreath(cx, cy, cz, spread, count) {
+    var g = new localTR.Group(); g.position.set(cx, cy, cz);
+    for (var i = 0; i < count; i++) {
+      var end = new localTR.Vector3(localRand(-spread, spread), localRand(-0.55, 0.85), localRand(-spread*0.55, spread*0.55));
+      g.add(localCylinderBetween(new localTR.Vector3(0, -0.4, 0), end, 0.008, matStem, 6));
+      var cl = new localTR.Group(); cl.position.copy(end);
+      var n = 4 + Math.floor(Math.random() * 5);
+      for (var j = 0; j < n; j++) {
+        var bf = new localTR.Mesh(new localTR.SphereGeometry(localRand(0.035,0.065), 10, 8),
+          Math.random() > 0.22 ? matBabyWhite : matBabyBlue);
+        bf.position.set(localRand(-0.12, 0.12), localRand(-0.09, 0.09), localRand(-0.12, 0.12));
+        bf.castShadow = true; cl.add(bf);
+      }
+      g.add(cl);
+    }
+    bouquetGroup.add(g);
+  }
+
+  function localPaperPanel(ca, aw, yb, yt, rb, rt, mat, fp) {
+    fp = fp || 0.12; var cols = 10, rows = 16;
+    var vv = [], ii = [];
+    for (var y = 0; y <= rows; y++) {
+      var v = y / rows, yy = yb*(1-v) + yt*v;
+      var rad = rb*(1-v) + rt*v;
+      var wid = aw * (0.55 + v * 0.45);
+      for (var x = 0; x <= cols; x++) {
+        var u = x/cols - 0.5, ang = ca + u * wid;
+        var fold = Math.sin(u * Math.PI * 4) * fp * v;
+        vv.push(Math.sin(ang) * (rad + fold), yy, Math.cos(ang) * (rad + fold));
+      }
+    }
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var a2 = y*(cols+1) + x, b2 = a2 + 1, c2 = a2 + cols + 1, d2 = c2 + 1;
+        ii.push(a2, c2, b2, b2, c2, d2);
+      }
+    }
+    var geo = new localTR.BufferGeometry();
+    geo.setAttribute("position", new localTR.Float32BufferAttribute(vv, 3));
+    geo.setIndex(ii); geo.computeVertexNormals();
+    var mesh = new localTR.Mesh(geo, mat);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    bouquetGroup.add(mesh);
+    var rimPts = [];
+    for (var x = 0; x <= cols; x++) {
+      var u2 = x/cols - 0.5, a3 = ca + u2 * aw;
+      rimPts.push(new localTR.Vector3(Math.sin(a3) * rt, yt + 0.015, Math.cos(a3) * rt));
+    }
+    bouquetGroup.add(new localTR.Line(
+      new localTR.BufferGeometry().setFromPoints(rimPts),
+      new localTR.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.38 })
+    ));
+  }
+
+  // Petal gradient textures
+  function createPetalGradientTexture(blueTint) {
+    var canvas = document.createElement("canvas");
+    canvas.width = 256; canvas.height = 32;
+    var ctx = canvas.getContext("2d");
+
+    var r0 = 235 + Math.round(blueTint * 20 - 10);
+    var g0 = 232 + Math.round(blueTint * 18 - 9);
+    var b0 = 220 + Math.round(blueTint * 38 - 19);
+
+    var rEdge = 185 - Math.round(blueTint * 35);
+    var gEdge = 188 - Math.round(blueTint * 32);
+    var bEdge = 215 + Math.round(blueTint * 48);
+
+    var gradient = ctx.createLinearGradient(0, 0, 256, 0);
+    gradient.addColorStop(0.0, "rgb(" + rEdge + "," + gEdge + "," + bEdge + ")");
+    gradient.addColorStop(0.08, "rgb(" + Math.round(rEdge*0.75 + r0*0.25) + "," + Math.round(gEdge*0.75 + g0*0.25) + "," + Math.round(bEdge*0.75 + b0*0.25) + ")");
+    gradient.addColorStop(0.20, "rgb(" + Math.round(rEdge*0.35 + r0*0.65) + "," + Math.round(gEdge*0.35 + g0*0.65) + "," + Math.round(bEdge*0.35 + b0*0.65) + ")");
+    gradient.addColorStop(0.35, "rgb(" + r0 + "," + g0 + "," + b0 + ")");
+    gradient.addColorStop(0.50, "#ffffff");
+    gradient.addColorStop(0.65, "rgb(" + r0 + "," + g0 + "," + b0 + ")");
+    gradient.addColorStop(0.80, "rgb(" + Math.round(rEdge*0.35 + r0*0.65) + "," + Math.round(gEdge*0.35 + g0*0.65) + "," + Math.round(bEdge*0.35 + b0*0.65) + ")");
+    gradient.addColorStop(0.92, "rgb(" + Math.round(rEdge*0.75 + r0*0.25) + "," + Math.round(gEdge*0.75 + g0*0.25) + "," + Math.round(bEdge*0.75 + b0*0.25) + ")");
+    gradient.addColorStop(1.0, "rgb(" + rEdge + "," + gEdge + "," + bEdge + ")");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 256, 32);
+
+    var tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  var petalTexWarm = createPetalGradientTexture(0.0);
+  var petalTexCool = createPetalGradientTexture(0.85);
+
+  // Materials
+  var matPetalWarm = new THREE.MeshPhysicalMaterial({ map: petalTexWarm, roughness: 0.48, clearcoat: 0.30, side: THREE.DoubleSide });
+  var matPetalCool = new THREE.MeshPhysicalMaterial({ map: petalTexCool, roughness: 0.48, clearcoat: 0.30, side: THREE.DoubleSide });
+  var matStem = new THREE.MeshStandardMaterial({ color: 0x4f6240, roughness: 0.86 });
+  var matLeaf = new THREE.MeshStandardMaterial({ color: 0x72875a, roughness: 0.8, side: THREE.DoubleSide });
+  var matBabyWhite = new THREE.MeshStandardMaterial({ color: 0xf8fbff, roughness: 0.52 });
+  var matBabyBlue = new THREE.MeshStandardMaterial({ color: 0xbfcaff, roughness: 0.58 });
+  var matPaperWarm = new THREE.MeshPhysicalMaterial({ color: 0xffefd1, roughness: 0.72, transparent: true, opacity: 0.78, depthWrite: false, side: THREE.DoubleSide });
+  var matPaperWhite = new THREE.MeshPhysicalMaterial({ color: 0xf7f9ff, roughness: 0.76, transparent: true, opacity: 0.64, depthWrite: false, side: THREE.DoubleSide });
+
+  // Wrapping paper
+  localPaperPanel(0, 1.35, -3.35, 0.10, 0.32, 2.25, matPaperWhite, 0.15);
+  localPaperPanel(0.72, 1.18, -3.32, 0.98, 0.34, 2.60, matPaperWarm, 0.13);
+  localPaperPanel(-0.72, 1.18, -3.32, 0.98, 0.34, 2.60, matPaperWarm, 0.13);
+  localPaperPanel(1.55, 1.05, -3.18, 1.82, 0.36, 2.40, matPaperWarm, 0.1);
+  localPaperPanel(-1.55, 1.05, -3.18, 1.82, 0.36, 2.40, matPaperWarm, 0.1);
+  localPaperPanel(Math.PI, 1.62, -3.25, 2.30, 0.42, 2.85, matPaperWarm, 0.1);
+
+  var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.28, 0.76, 40, 1, true), matPaperWhite);
+  neck.position.y = -3.12; neck.castShadow = true;
+  bouquetGroup.add(neck);
+
+  // Card
+  var card = new THREE.Group();
+  card.position.set(0.22, 2.08, -1.18);
+  card.rotation.set(THREE.MathUtils.degToRad(-8), THREE.MathUtils.degToRad(-3), 0);
+  var board = new THREE.Mesh(new THREE.BoxGeometry(4.95, 1.55, 0.045),
+    new THREE.MeshPhysicalMaterial({ color: 0xfff7ea, roughness: 0.62 }));
+  board.castShadow = true; board.receiveShadow = true; card.add(board);
+  var canvas2d = document.createElement("canvas");
+  canvas2d.width = 1200; canvas2d.height = 380;
+  var c = canvas2d.getContext("2d");
+  c.fillStyle = "#fff7ea"; c.fillRect(0, 0, canvas2d.width, canvas2d.height);
+  c.fillStyle = "#15120f"; c.textAlign = "center"; c.textBaseline = "middle";
+  c.font = "108px Georgia"; c.fillText("You are my LOVE", 600, 155);
+  c.font = "42px cursive"; c.fillText("Love with you", 760, 255);
+  var tex = new THREE.CanvasTexture(canvas2d);
+  tex.anisotropy = 8;
+  var face = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 1.48), new THREE.MeshBasicMaterial({ map: tex }));
+  face.position.z = 0.027; card.add(face);
+  bouquetGroup.add(card);
+
+  // Ribbon
+  var matRibbon = new THREE.MeshPhysicalMaterial({
+    color: 0xdcecff, roughness: 0.35, transparent: true, opacity: 0.68, side: THREE.DoubleSide
+  });
+  var knot = new THREE.Mesh(new THREE.SphereGeometry(0.28, 28, 18), matRibbon);
+  knot.position.set(0, -3.38, 0.28); knot.scale.set(1.15, 0.75, 0.55);
+  bouquetGroup.add(knot);
+  for (var si = 0; si < 2; si++) {
+    var sd = si === 0 ? -1 : 1;
+    var loop = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.055, 12, 48), matRibbon);
+    loop.position.set(sd * 0.38, -3.38, 0.28);
+    loop.rotation.set(0.45, sd * 0.45, sd * 0.62); loop.scale.set(1.25, 0.72, 0.35);
+    bouquetGroup.add(loop);
+    var tail = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 1.2, 3, 12), matRibbon);
+    tail.position.set(sd * 0.22, -4.0, 0.26);
+    tail.rotation.set(sd * 0.12, sd * 0.18, sd * 0.18);
+    bouquetGroup.add(tail);
+  }
+
+  // 9 lisianthus flowers — 3×3 grid
+  // Back row
+  localCreateFlower({ x:-1.55, y:0.62, z:-1.20, sc:0.92, rz:-0.14, tx:-0.9, ty:-0.72, cool:false });
+  localCreateFlower({ x: 0.00, y:0.90, z:-1.40, sc:0.94, rz:0.00, tx:-1.35, ty:0.00, cool:true });
+  localCreateFlower({ x: 1.55, y:0.62, z:-1.20, sc:0.92, rz:0.14, tx:-0.9, ty:0.72, cool:false });
+  // Middle row
+  localCreateFlower({ x:-1.55, y:0.60, z:0.05, sc:0.90, rz:-0.12, tx:-0.88, ty:-0.48, cool:true });
+  localCreateFlower({ x: 0.00, y:0.95, z:-0.05, sc:0.92, rz:0.00, tx:-0.88, ty:0.00, cool:false });
+  localCreateFlower({ x: 1.55, y:0.60, z:0.05, sc:0.90, rz:0.12, tx:-0.88, ty:0.48, cool:true });
+  // Front row
+  localCreateFlower({ x:-1.55, y:0.42, z:0.75, sc:0.88, rz:-0.16, tx:-0.55, ty:-0.52, cool:false });
+  localCreateFlower({ x: 0.00, y:0.50, z:1.05, sc:0.91, rz:0.00, tx:-0.58, ty:0.00, cool:true });
+  localCreateFlower({ x: 1.55, y:0.42, z:0.75, sc:0.88, rz:0.16, tx:-0.55, ty:0.52, cool:false });
+
+  // Baby's breath
+  localBabyBreath(-1.40, 0.62, -1.00, 1.10, 18);
+  localBabyBreath( 0.00, 0.72, -1.10, 1.15, 20);
+  localBabyBreath( 1.40, 0.62, -1.00, 1.10, 18);
+  localBabyBreath(-1.35, 0.44,  0.25, 1.00, 18);
+  localBabyBreath( 0.00, 0.50,  0.20, 1.05, 20);
+  localBabyBreath( 1.35, 0.44,  0.25, 1.00, 18);
+  localBabyBreath(-1.35, 0.36,  0.60, 0.90, 16);
+  localBabyBreath( 0.00, 0.40,  0.70, 0.95, 18);
+  localBabyBreath( 1.35, 0.36,  0.60, 0.90, 16);
+  localBabyBreath(-1.05, 0.52, -0.50, 0.85, 14);
+  localBabyBreath( 1.05, 0.52, -0.50, 0.85, 14);
+  localBabyBreath(-1.05, 0.38,  0.42, 0.75, 12);
+  localBabyBreath( 1.05, 0.38,  0.42, 0.75, 12);
+  for (var i = 0; i < 24; i++) {
+    localLeaf(localRand(-2.4, 2.4), localRand(-0.4, 1.0), localRand(-1.50, 1.25),
+      localRand(0.45, 0.85), localRand(-0.8, 0.8), localRand(0, Math.PI*2), localRand(-0.6, 0.6));
+  }
+
+  var floor = new THREE.Mesh(new THREE.CircleGeometry(5.3, 96),
+    new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.28 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -4.35; floor.receiveShadow = true;
+  bouquetScene.add(floor);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    bouquetControls.update();
+    bouquetRenderer.render(bouquetScene, bouquetCamera);
+  }
+  animate();
 }
+
+function resizeBouquet() {
+  if (!bouquetRenderer) return;
+  bouquetCamera.aspect = window.innerWidth / window.innerHeight;
+  bouquetCamera.updateProjectionMatrix();
+  bouquetRenderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// 初始化花束（由模块脚本触发）
+(function waitForTHREE() {
+  if (window._THREE && window._OrbitControls) {
+    initBouquet();
+  } else {
+    setTimeout(waitForTHREE, 50);
+  }
+})();
 
 // ═══════════════════════════════════════════
 //  优雅粒子特效
 // ═══════════════════════════════════════════
 
-const sparkleCanvas = document.getElementById('sparkleCanvas');
-const spCtx = sparkleCanvas.getContext('2d');
+var TAU = Math.PI * 2;
+
+var sparkleCanvas = document.getElementById('sparkleCanvas');
+var spCtx = sparkleCanvas.getContext('2d');
 sparkleCanvas.width = window.innerWidth;
 sparkleCanvas.height = window.innerHeight;
 
-let sparkles = [];
+var sparkles = [];
 
 class Sparkle {
   constructor(x, y, color) {
@@ -344,7 +775,7 @@ class Sparkle {
     return this.life > 0;
   }
   draw(ctx) {
-    const a = Math.max(0, this.life);
+    var a = Math.max(0, this.life);
     ctx.save();
     ctx.globalAlpha = a * this.glow;
     ctx.fillStyle = this.color;
@@ -358,8 +789,8 @@ class Sparkle {
 }
 
 function emitSparkles(x, y, count, colors) {
-  for (let i=0;i<count;i++) {
-    const sp = new Sparkle(x+(Math.random()-0.5)*30, y+(Math.random()-0.5)*30);
+  for (var i=0;i<count;i++) {
+    var sp = new Sparkle(x+(Math.random()-0.5)*30, y+(Math.random()-0.5)*30);
     if (colors) sp.color = colors[Math.floor(Math.random()*colors.length)];
     sparkles.push(sp);
   }
@@ -376,9 +807,9 @@ animSparkles();
 //  烟花系统
 // ═══════════════════════════════════════════
 
-const fwCanvas = document.getElementById('fwCanvas');
-const fwCtx = fwCanvas.getContext('2d');
-let fireworks = [];
+var fwCanvas = document.getElementById('fwCanvas');
+var fwCtx = fwCanvas.getContext('2d');
+var fireworks = [];
 
 function resizeFw() { fwCanvas.width = window.innerWidth; fwCanvas.height = window.innerHeight; }
 resizeFw();
@@ -422,8 +853,8 @@ class Spark {
 class Burst {
   constructor(x,y){
     this.sparks=[];const c=['#ff3060','#ff6b9d','#ffd740','#ff8c00','#c084fc','#22d3ee','#f472b6','#fbbf24'];
-    const p=[c[Math.floor(Math.random()*c.length)],c[Math.floor(Math.random()*c.length)],c[Math.floor(Math.random()*c.length)]];
-    for(let i=0;i<130;i++) this.sparks.push(new Spark(x,y,p[Math.floor(Math.random()*3)]));
+    var p=[c[Math.floor(Math.random()*c.length)],c[Math.floor(Math.random()*c.length)],c[Math.floor(Math.random()*c.length)]];
+    for(var i=0;i<130;i++) this.sparks.push(new Spark(x,y,p[Math.floor(Math.random()*3)]));
   }
   update(){this.sparks.forEach(s=>s.update());this.sparks=this.sparks.filter(s=>s.life>0);}
   draw(ctx){this.sparks.forEach(s=>s.draw(ctx));}
@@ -431,16 +862,16 @@ class Burst {
 }
 
 function launchFireworks(n){
-  for(let i=0;i<n;i++) setTimeout(()=>{
-    const x=window.innerWidth*0.1+Math.random()*window.innerWidth*0.8;
-    const ty=window.innerHeight*0.06+Math.random()*window.innerHeight*0.4;
+  for(var i=0;i<n;i++) setTimeout(()=>{
+    var x=window.innerWidth*0.1+Math.random()*window.innerWidth*0.8;
+    var ty=window.innerHeight*0.06+Math.random()*window.innerHeight*0.4;
     fireworks.push({type:'r',obj:new Rocket(x,ty)});
   },i*140);
 }
 
 function animFw(){
   fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height);
-  const nf=[];
+  var nf=[];
   for(const f of fireworks){
     if(f.type==='r'){
       if(f.obj.update()) nf.push({type:'b',obj:new Burst(f.obj.x,f.obj.y)});
@@ -455,8 +886,8 @@ animFw();
 //  Toast
 // ═══════════════════════════════════════════
 
-const toastEl=document.getElementById('toast');
-let toastTimer;
+var toastEl=document.getElementById('toast');
+var toastTimer;
 function showToast(m){
   clearTimeout(toastTimer);
   toastEl.classList.remove('toast--hidden');toastEl.textContent=m;
@@ -464,7 +895,7 @@ function showToast(m){
 }
 
 function showRandomMessage(){
-  const m=['在这个世界上，最幸运的事就是遇见你','乖乖，你的笑容是我每天的阳光','无论多远，我的心都和你在一起','你是我生命中最美好的意外','每一天都想对你说：我爱你','你是我的心跳，是我的唯一','想和你一起慢慢变老','乖乖是这个世界上最可爱的人','遇见你，是我这辈子最大的幸运','春风十里不如你','你就是我的全世界','和你在一起的每一秒都很甜','愿做你的守护星，永远闪亮','陪你看遍世间所有美好','爱你就像爱生命'];
+  var m=['在这个世界上，最幸运的事就是遇见你','乖乖，你的笑容是我每天的阳光','无论多远，我的心都和你在一起','你是我生命中最美好的意外','每一天都想对你说：我爱你','你是我的心跳，是我的唯一','想和你一起慢慢变老','乖乖是这个世界上最可爱的人','遇见你，是我这辈子最大的幸运','春风十里不如你','你就是我的全世界','和你在一起的每一秒都很甜','愿做你的守护星，永远闪亮','陪你看遍世间所有美好','爱你就像爱生命'];
   showToast(m[Math.floor(Math.random()*m.length)]);
 }
 
@@ -472,8 +903,8 @@ function showRandomMessage(){
 //  音乐
 // ═══════════════════════════════════════════
 
-const bgm = document.getElementById('bgm');
-let musicPlaying = false;
+var bgm = document.getElementById('bgm');
+var musicPlaying = false;
 
 function toggleMusic() {
   if (musicPlaying) {
@@ -490,253 +921,45 @@ function toggleMusic() {
   }
 }
 
-// ═══════════════════════════════════════════
-//  100天纪念日检测 (2026-08-17)
-// ═══════════════════════════════════════════
-var isSpecialDay = (function () {
-  var qs = new URLSearchParams(window.location.search);
-  if (qs.get('special') === '1') return true; // 预览开关
-  var now = new Date();
-  return now.getFullYear() === 2026 && now.getMonth() === 7 && now.getDate() === 17;
-})();
-
-// ═══════════════════════════════════════════
-//  烟花特效（纪念日专用）
-// ═══════════════════════════════════════════
-var specialCanvas = document.getElementById('specialCanvas');
-var sctx = specialCanvas.getContext('2d');
-
-function runSpecialFirework(callback) {
-  specialCanvas.style.display = 'block';
-  document.getElementById('heartCanvas').style.display = 'none';
-  document.getElementById('sparkleCanvas').style.display = 'none';
-  document.getElementById('fwCanvas').style.display = 'none';
-
-  var SW, SH, SDPR;
-  var sframe = 0;
-  var sphase = 'launch';
-  var srocket = { x: 0, y: 0, targetY: 0, speed: 6, trail: [] };
-  var sparticles = [];
-  var sstars = [];
-  var scolors = ["#ff4470", "#ff6b9d", "#ffb3c6", "#ffd740", "#ffffff", "#fb7185"];
-  var smessage = isSpecialDay ? "祝我们100天快乐" : "祝我们100天快乐";
-
-  function sResize() {
-    SDPR = window.devicePixelRatio || 1;
-    SW = window.innerWidth; SH = window.innerHeight;
-    specialCanvas.width = SW * SDPR;
-    specialCanvas.height = SH * SDPR;
-    specialCanvas.style.width = SW + 'px';
-    specialCanvas.style.height = SH + 'px';
-    sctx.setTransform(SDPR, 0, 0, SDPR, 0, 0);
-  }
-  sResize();
-  srocket.x = SW / 2;
-  srocket.y = SH + 40;
-  srocket.targetY = SH * 0.32;
-
-  for (var i = 0; i < 120; i++) {
-    sstars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.6 + 0.3, alpha: Math.random() * 0.6 + 0.25 });
-  }
-
-  function smakeTextPoints() {
-    var off = document.createElement('canvas');
-    var octx = off.getContext('2d');
-    off.width = SW; off.height = SH;
-    var fontSize = Math.min(SW / 10, 82);
-    octx.fillStyle = '#fff'; octx.textAlign = 'center'; octx.textBaseline = 'middle';
-    octx.font = '700 ' + fontSize + 'px "Microsoft YaHei", "PingFang SC", sans-serif';
-    var textY = SH * 0.46;
-    octx.fillText(smessage, SW / 2, textY);
-    var data = octx.getImageData(0, 0, SW, SH).data;
-    var pts = [];
-    var gap = SW < 520 ? 7 : 6;
-    for (var y = 0; y < SH; y += gap) {
-      for (var x = 0; x < SW; x += gap) {
-        if (data[(y * SW + x) * 4 + 3] > 128) pts.push({ x: x, y: y });
-      }
-    }
-    return pts;
-  }
-
-  function screateExplosion() {
-    var textPts = smakeTextPoints();
-    sparticles = textPts.map(function (pt, j) {
-      var angle = Math.random() * Math.PI * 2;
-      var dist = Math.random() * 220 + 40;
-      return {
-        x: srocket.x + Math.cos(angle) * dist, y: srocket.targetY + Math.sin(angle) * dist,
-        tx: pt.x, ty: pt.y,
-        vx: Math.cos(angle) * (Math.random() * 7 + 2), vy: Math.sin(angle) * (Math.random() * 7 + 2),
-        size: Math.random() * 2.2 + 1.2, color: scolors[j % scolors.length],
-        delay: Math.random() * 40
-      };
-    });
-    sphase = 'forming';
-    sframe = 0;
-  }
-
-  function sdrawStars() {
-    for (var j = 0; j < sstars.length; j++) {
-      var s = sstars[j];
-      sctx.globalAlpha = s.alpha + Math.sin(sframe * 0.03 + s.x) * 0.18;
-      sctx.fillStyle = '#ffffff';
-      sctx.beginPath(); sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); sctx.fill();
-    }
-    sctx.globalAlpha = 1;
-  }
-
-  function sdrawRocket() {
-    srocket.trail.push({ x: srocket.x, y: srocket.y });
-    if (srocket.trail.length > 28) srocket.trail.shift();
-    for (var j = 0; j < srocket.trail.length; j++) {
-      var p = srocket.trail[j];
-      sctx.globalAlpha = j / srocket.trail.length;
-      sctx.fillStyle = '#ffd166';
-      sctx.beginPath(); sctx.arc(p.x, p.y, 3 + j * 0.08, 0, Math.PI * 2); sctx.fill();
-    }
-    sctx.globalAlpha = 1;
-    sctx.fillStyle = '#ffffff';
-    sctx.beginPath(); sctx.arc(srocket.x, srocket.y, 4, 0, Math.PI * 2); sctx.fill();
-    sctx.shadowColor = '#ff4470'; sctx.shadowBlur = 18;
-    sctx.fillStyle = '#ff4470';
-    sctx.beginPath(); sctx.arc(srocket.x, srocket.y + 9, 3, 0, Math.PI * 2); sctx.fill();
-    sctx.shadowBlur = 0;
-  }
-
-  function supdateRocket() {
-    srocket.x = SW / 2 + Math.sin(sframe * 0.08) * 18;
-    srocket.y -= srocket.speed;
-    srocket.speed *= 0.992;
-    if (srocket.y <= srocket.targetY) screateExplosion();
-  }
-
-  function sdrawFlash() {
-    var alpha = Math.max(0, 1 - sframe / 45);
-    if (alpha <= 0) return;
-    var radius = sframe * 7;
-    var g = sctx.createRadialGradient(srocket.x, srocket.targetY, 0, srocket.x, srocket.targetY, radius);
-    g.addColorStop(0, 'rgba(255,255,255,' + alpha + ')');
-    g.addColorStop(0.35, 'rgba(255,209,102,' + (alpha * 0.55) + ')');
-    g.addColorStop(1, 'rgba(255,68,112,0)');
-    sctx.fillStyle = g;
-    sctx.beginPath(); sctx.arc(srocket.x, srocket.targetY, radius, 0, Math.PI * 2); sctx.fill();
-  }
-
-  function sdrawParticles() {
-    for (var j = 0; j < sparticles.length; j++) {
-      var p = sparticles[j];
-      if (sframe < p.delay) continue;
-      var ease = Math.min(1, (sframe - p.delay) / 120);
-      var pull = ease * ease * (3 - 2 * ease);
-      p.x += (p.tx - p.x) * (0.018 + pull * 0.055);
-      p.y += (p.ty - p.y) * (0.018 + pull * 0.055);
-      if (ease < 0.5) { p.x += p.vx * (1 - ease * 2); p.y += p.vy * (1 - ease * 2); }
-      var twinkle = 0.72 + Math.sin(sframe * 0.12 + p.tx * 0.05) * 0.28;
-      sctx.globalAlpha = twinkle; sctx.shadowColor = p.color; sctx.shadowBlur = 10;
-      sctx.fillStyle = p.color;
-      sctx.beginPath(); sctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); sctx.fill();
-      sctx.shadowBlur = 0;
-    }
-    sctx.globalAlpha = 1;
-  }
-
-  function sdrawSparkles() {
-    if (sphase === 'launch') return;
-    for (var j = 0; j < 24; j++) {
-      var angle = (j / 24) * Math.PI * 2 + sframe * 0.01;
-      var r = 110 + Math.sin(sframe * 0.04 + j) * 18;
-      var sx = SW / 2 + Math.cos(angle) * r;
-      var sy = SH * 0.46 + Math.sin(angle) * r * 0.45;
-      sctx.globalAlpha = 0.35; sctx.fillStyle = scolors[j % scolors.length];
-      sctx.beginPath(); sctx.arc(sx, sy, 1.4, 0, Math.PI * 2); sctx.fill();
-    }
-    sctx.globalAlpha = 1;
-  }
-
-  var doneCalled = false;
-  var doneTimer = null;
-
-  function sanimate() {
-    sframe++;
-    sctx.fillStyle = 'rgba(2,3,10,0.18)';
-    sctx.fillRect(0, 0, SW, SH);
-    sdrawStars();
-    if (sphase === 'launch') { supdateRocket(); sdrawRocket(); }
-    else if (sphase === 'forming') {
-      sdrawFlash(); sdrawParticles(); sdrawSparkles();
-      // 粒子成形后 3 秒淡出
-      if (!doneCalled && sframe > 300) {
-        doneCalled = true;
-        doneTimer = setTimeout(function () {
-          var fade = setInterval(function () {
-            var op = parseFloat(specialCanvas.style.opacity || 1);
-            op -= 0.06;
-            if (op <= 0) {
-              clearInterval(fade);
-              specialCanvas.style.display = 'none';
-              specialCanvas.style.opacity = 1;
-              callback();
-            } else {
-              specialCanvas.style.opacity = op;
-            }
-          }, 30);
-        }, 3000);
-      }
-    }
-    requestAnimationFrame(sanimate);
-  }
-  sanimate();
-}
 
 document.getElementById('btnEnter').addEventListener('click', () => {
-  // 点进入就播音乐
   bgm.play().then(function () {
     musicPlaying = true;
     document.getElementById('btnMusic').textContent = '🎵 暂停';
   }).catch(function () {});
-  if (isSpecialDay) {
-    // 先关入场门
-    document.getElementById('gate').classList.add('hidden');
-    // 隐藏底部按钮和纪念日
-    document.querySelector('.footer').style.display = 'none';
-    document.querySelector('.side-panel').style.display = 'none';
-    // body 背景临时换成纯黑星空
-    document.body.style.background = '#02030a';
-    runSpecialFirework(function () {
-      // 烟花结束，恢复
-      document.getElementById('heartCanvas').style.display = '';
-      document.getElementById('sparkleCanvas').style.display = '';
-      document.getElementById('fwCanvas').style.display = '';
-      document.querySelector('.footer').style.display = '';
-      document.querySelector('.side-panel').style.display = '';
-      document.body.style.background = '';
-      launchFireworks(6);
-      showToast('欢迎回家 ❤️');
-    });
-  } else {
-    document.getElementById('gate').classList.add('hidden');
-    bgm.play().then(function () {
-      musicPlaying = true;
-      document.getElementById('btnMusic').textContent = '🎵 暂停';
-      launchFireworks(6);
-      showToast('欢迎回家 ❤️');
-    }).catch(function () {});
-  }
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('envelopeEl').style.display = '';
+  launchFireworks(6);
+  showToast('欢迎回家 ❤️');
+});
+
+// 信封点击 → 打开留言信
+document.getElementById('envelopeEl').addEventListener('click', function (e) {
+  e.stopPropagation();
+  document.getElementById('letterOverlay').classList.add('open');
+});
+
+// 关闭留言信
+document.getElementById('letterClose').addEventListener('click', function (e) {
+  e.stopPropagation();
+  document.getElementById('letterOverlay').classList.remove('open');
+});
+document.getElementById('letterOverlay').addEventListener('click', function (e) {
+  if (e.target === this) document.getElementById('letterOverlay').classList.remove('open');
 });
 
 // ═══════════════════════════════════════════
 //  交互: 点击爱心
 // ═══════════════════════════════════════════
 
-heartCanvas.addEventListener('click', (e) => {
+document.getElementById('threeApp').addEventListener('click', (e) => {
   emitSparkles(e.clientX, e.clientY, 18, ['#ff6b9d','#ff4470','#ffb3c6','#ffd740']);
   launchFireworks(3);
-  const msgs = ['乖乖最好啦~','好爱好爱你','为你心动','爱的抱抱','亲一个'];
+  var msgs = ['乖乖最好啦~','好爱好爱你','为你心动','爱的抱抱','亲一个'];
   showToast(msgs[Math.floor(Math.random()*msgs.length)]);
 });
 
-heartCanvas.addEventListener('dblclick', (e) => {
+document.getElementById('threeApp').addEventListener('dblclick', (e) => {
   e.preventDefault();
   launchFireworks(10);
   emitSparkles(e.clientX, e.clientY, 40, ['#ff6b9d','#ff4470','#ffd740','#c084fc','#22d3ee']);
@@ -751,13 +974,13 @@ document.getElementById('btnFirework').addEventListener('click',()=>{
   launchFireworks(12);showToast('为你绽放最美的烟花');
 });
 document.getElementById('btnBubble').addEventListener('click',()=>{
-  const cx=window.innerWidth/2,cy=window.innerHeight*0.42;
-  for(let i=0;i<8;i++) setTimeout(()=>emitSparkles(cx+(Math.random()-0.5)*220,cy+(Math.random()-0.5)*160,10,['#ff6b9d','#ffb3c6','#ff4470']),i*100);
+  var cx=window.innerWidth/2,cy=window.innerHeight*0.42;
+  for(var i=0;i<8;i++) setTimeout(()=>emitSparkles(cx+(Math.random()-0.5)*220,cy+(Math.random()-0.5)*160,10,['#ff6b9d','#ffb3c6','#ff4470']),i*100);
   showToast('爱你一万遍');
 });
 document.getElementById('btnStar').addEventListener('click',()=>{
   launchFireworks(6);
-  for(let i=0;i<40;i++) setTimeout(()=>emitSparkles(Math.random()*innerWidth*0.8+innerWidth*0.1,Math.random()*innerHeight*0.35+innerHeight*0.05,4,['#ffd740','#c084fc','#22d3ee']),i*35);
+  for(var i=0;i<40;i++) setTimeout(()=>emitSparkles(Math.random()*innerWidth*0.8+innerWidth*0.1,Math.random()*innerHeight*0.35+innerHeight*0.05,4,['#ffd740','#c084fc','#22d3ee']),i*35);
   showToast('满天繁星，不如你眼睛里的光');
 });
 document.getElementById('btnMessage').addEventListener('click',()=>{ showRandomMessage(); });
@@ -776,14 +999,12 @@ window.addEventListener('keydown',e=>{
 });
 
 window.addEventListener('resize', () => {
-  resizeHeartCanvas();
   resizeFw();
+  resizeBouquet();
   sparkleCanvas.width = window.innerWidth;
   sparkleCanvas.height = window.innerHeight;
-  buildHeartData();
 });
 
-renderHeartFrame(0);
 setTimeout(()=>launchFireworks(4), 800);
 </script>
 </body>
