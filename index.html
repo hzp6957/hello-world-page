@@ -733,9 +733,11 @@ function initBouquet() {
 
 function resizeBouquet() {
   if (!bouquetRenderer) return;
-  bouquetCamera.aspect = window.innerWidth / window.innerHeight;
+  var W = window.innerWidth, H = window.innerHeight;
+  if (W < 2) return; // 防止异常
+  bouquetCamera.aspect = W / H;
   bouquetCamera.updateProjectionMatrix();
-  bouquetRenderer.setSize(window.innerWidth, window.innerHeight);
+  bouquetRenderer.setSize(W, H);
 }
 
 // 初始化花束（由模块脚本触发）
