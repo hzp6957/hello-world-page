@@ -19,15 +19,23 @@
 
 body {
   width:100vw;height:100dvh;overflow:hidden;
-  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('f91567a6ccbc1a50cea0dcd14415f91a.jpg') center/cover no-repeat fixed;
+  background:#000000;
   font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
   -webkit-tap-highlight-color:transparent;
   user-select:none;-webkit-user-select:none;
 }
 
-#threeApp { position:fixed;inset:0;z-index:0; }
+.bg-layer {
+  position:fixed;inset:0;z-index:0;
+  background-position:center;background-size:cover;background-repeat:no-repeat;
+  filter:brightness(0.62);
+  opacity:0;transition:opacity 1.5s ease;
+}
+.bg-layer.active { opacity:1;z-index:1; }
+#threeApp { position:fixed;inset:0;z-index:1; }
 #sparkleCanvas { position:fixed;inset:0;z-index:2;pointer-events:none; }
 #fwCanvas { position:fixed;inset:0;z-index:5;pointer-events:none; }
+#specialCanvas { position:fixed;inset:0;z-index:60;display:none; }
 
 .footer {
   position:fixed;bottom:clamp(10px,3vh,34px);left:0;right:0;z-index:10;
@@ -226,9 +234,13 @@ body {
 </head>
 <body>
 
-<div id="threeApp" style="position:fixed;inset:0;z-index:0;"></div>
+<div id="bg1" class="bg-layer" style="background-image:url('1.jpg');"></div>
+<div id="bg2" class="bg-layer" style="background-image:url('2.jpg');"></div>
+<div id="bg3" class="bg-layer" style="background-image:url('3.jpg');"></div>
+<div id="threeApp" style="position:fixed;inset:0;z-index:1;"></div>
 <canvas id="sparkleCanvas"></canvas>
 <canvas id="fwCanvas"></canvas>
+<canvas id="specialCanvas"></canvas>
 
 <!-- 恋爱纪念日 -->
 <div class="side-panel right">
@@ -354,6 +366,20 @@ function scheduleMidnightRefresh() {
   setTimeout(() => { updateAnniversary(); setInterval(updateAnniversary, 86400000); }, ms + 1000);
 }
 scheduleMidnightRefresh();
+
+// ═══════════════════════════════════════════
+//  背景循环：1.jpg → 2.jpg → 3.jpg
+// ═══════════════════════════════════════════
+
+var bgLayers = [document.getElementById('bg1'), document.getElementById('bg2'), document.getElementById('bg3')];
+var bgIndex = 0;
+bgLayers[0].classList.add('active');
+
+setInterval(function () {
+  bgLayers[bgIndex].classList.remove('active');
+  bgIndex = (bgIndex + 1) % bgLayers.length;
+  bgLayers[bgIndex].classList.add('active');
+}, 8000);
 
 // ═══════════════════════════════════════════
 //  3D 洋桔梗花束
@@ -924,15 +950,218 @@ function toggleMusic() {
 }
 
 
+// ═══════════════════════════════════════════
+//  入场烟花：火箭升空 → "祝我们100天快乐"文字烟花
+// ═══════════════════════════════════════════
+
+var specialCanvas = document.getElementById('specialCanvas');
+var sctx = specialCanvas.getContext('2d');
+
+function runSpecialFirework(callback) {
+  specialCanvas.style.display = 'block';
+  specialCanvas.style.opacity = 1;
+
+  var SW, SH, SDPR;
+  var sframe = 0;
+  var sphase = 'launch';
+  var srocket = { x: 0, y: 0, targetY: 0, speed: 6, trail: [] };
+  var sparticles = [];
+  var sstars = [];
+  var scolors = ["#ff4470", "#ff6b9d", "#ffb3c6", "#ffd740", "#ffffff", "#fb7185"];
+  var smessage = "祝我们100天快乐";
+  var sDone = false;
+
+  function sResize() {
+    SDPR = window.devicePixelRatio || 1;
+    SW = window.innerWidth; SH = window.innerHeight;
+    specialCanvas.width = SW * SDPR;
+    specialCanvas.height = SH * SDPR;
+    specialCanvas.style.width = SW + 'px';
+    specialCanvas.style.height = SH + 'px';
+    sctx.setTransform(SDPR, 0, 0, SDPR, 0, 0);
+  }
+  sResize();
+  window.addEventListener('resize', sResize);
+  srocket.x = SW / 2;
+  srocket.y = SH + 40;
+  srocket.targetY = SH * 0.32;
+
+  for (var i = 0; i < 120; i++) {
+    sstars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.6 + 0.3, alpha: Math.random() * 0.6 + 0.25 });
+  }
+
+  function smakeTextPoints() {
+    var off = document.createElement('canvas');
+    var octx = off.getContext('2d');
+    off.width = SW; off.height = SH;
+    var fontSize = Math.min(SW / 10, 82);
+    octx.fillStyle = '#fff'; octx.textAlign = 'center'; octx.textBaseline = 'middle';
+    octx.font = '700 ' + fontSize + 'px "Microsoft YaHei", "PingFang SC", sans-serif';
+    var textY = SH * 0.46;
+    octx.fillText(smessage, SW / 2, textY);
+    var data = octx.getImageData(0, 0, SW, SH).data;
+    var pts = [];
+    var gap = SW < 520 ? 7 : 6;
+    for (var y = 0; y < SH; y += gap) {
+      for (var x = 0; x < SW; x += gap) {
+        if (data[(y * SW + x) * 4 + 3] > 128) pts.push({ x: x, y: y });
+      }
+    }
+    return pts;
+  }
+
+  function screateExplosion() {
+    var textPts = smakeTextPoints();
+    sparticles = textPts.map(function (pt, j) {
+      var angle = Math.random() * Math.PI * 2;
+      var dist = Math.random() * 220 + 40;
+      return {
+        x: srocket.x + Math.cos(angle) * dist, y: srocket.targetY + Math.sin(angle) * dist,
+        tx: pt.x, ty: pt.y,
+        vx: Math.cos(angle) * (Math.random() * 7 + 2), vy: Math.sin(angle) * (Math.random() * 7 + 2),
+        size: Math.random() * 2.2 + 1.2, color: scolors[j % scolors.length],
+        delay: Math.random() * 40
+      };
+    });
+    sphase = 'forming';
+    sframe = 0;
+  }
+
+  function sdrawStars() {
+    for (var j = 0; j < sstars.length; j++) {
+      var s = sstars[j];
+      sctx.globalAlpha = s.alpha + Math.sin(sframe * 0.03 + s.x) * 0.18;
+      sctx.fillStyle = '#ffffff';
+      sctx.beginPath(); sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); sctx.fill();
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  function sdrawRocket() {
+    srocket.trail.push({ x: srocket.x, y: srocket.y });
+    if (srocket.trail.length > 28) srocket.trail.shift();
+    for (var j = 0; j < srocket.trail.length; j++) {
+      var p = srocket.trail[j];
+      sctx.globalAlpha = j / srocket.trail.length;
+      sctx.fillStyle = '#ffd166';
+      sctx.beginPath(); sctx.arc(p.x, p.y, 3 + j * 0.08, 0, Math.PI * 2); sctx.fill();
+    }
+    sctx.globalAlpha = 1;
+    sctx.fillStyle = '#ffffff';
+    sctx.beginPath(); sctx.arc(srocket.x, srocket.y, 4, 0, Math.PI * 2); sctx.fill();
+    sctx.shadowColor = '#ff4470'; sctx.shadowBlur = 18;
+    sctx.fillStyle = '#ff4470';
+    sctx.beginPath(); sctx.arc(srocket.x, srocket.y + 9, 3, 0, Math.PI * 2); sctx.fill();
+    sctx.shadowBlur = 0;
+  }
+
+  function supdateRocket() {
+    srocket.x = SW / 2 + Math.sin(sframe * 0.08) * 18;
+    srocket.y -= srocket.speed;
+    srocket.speed *= 0.992;
+    if (srocket.y <= srocket.targetY) screateExplosion();
+  }
+
+  function sdrawFlash() {
+    var alpha = Math.max(0, 1 - sframe / 45);
+    if (alpha <= 0) return;
+    var radius = sframe * 7;
+    var g = sctx.createRadialGradient(srocket.x, srocket.targetY, 0, srocket.x, srocket.targetY, radius);
+    g.addColorStop(0, 'rgba(255,255,255,' + alpha + ')');
+    g.addColorStop(0.35, 'rgba(255,209,102,' + (alpha * 0.55) + ')');
+    g.addColorStop(1, 'rgba(255,68,112,0)');
+    sctx.fillStyle = g;
+    sctx.beginPath(); sctx.arc(srocket.x, srocket.targetY, radius, 0, Math.PI * 2); sctx.fill();
+  }
+
+  function sdrawParticles() {
+    for (var j = 0; j < sparticles.length; j++) {
+      var p = sparticles[j];
+      if (sframe < p.delay) continue;
+      var ease = Math.min(1, (sframe - p.delay) / 120);
+      var pull = ease * ease * (3 - 2 * ease);
+      p.x += (p.tx - p.x) * (0.018 + pull * 0.055);
+      p.y += (p.ty - p.y) * (0.018 + pull * 0.055);
+      if (ease < 0.5) { p.x += p.vx * (1 - ease * 2); p.y += p.vy * (1 - ease * 2); }
+      var twinkle = 0.72 + Math.sin(sframe * 0.12 + p.tx * 0.05) * 0.28;
+      sctx.globalAlpha = twinkle; sctx.shadowColor = p.color; sctx.shadowBlur = 10;
+      sctx.fillStyle = p.color;
+      sctx.beginPath(); sctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); sctx.fill();
+      sctx.shadowBlur = 0;
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  function sdrawSparkles() {
+    if (sphase === 'launch') return;
+    for (var j = 0; j < 24; j++) {
+      var angle = (j / 24) * Math.PI * 2 + sframe * 0.01;
+      var r = 110 + Math.sin(sframe * 0.04 + j) * 18;
+      var sx = SW / 2 + Math.cos(angle) * r;
+      var sy = SH * 0.46 + Math.sin(angle) * r * 0.45;
+      sctx.globalAlpha = 0.35; sctx.fillStyle = scolors[j % scolors.length];
+      sctx.beginPath(); sctx.arc(sx, sy, 1.4, 0, Math.PI * 2); sctx.fill();
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  function sfinish() {
+    window.removeEventListener('resize', sResize);
+    clearInterval(sTimer);
+    specialCanvas.style.display = 'none';
+    specialCanvas.style.opacity = 1;
+    callback();
+  }
+
+  // 基于时间戳推进：即使定时器被浏览器节流，动画也会按正确节奏播完
+  var sLast = Date.now();
+  var sDoneAt = 0;
+
+  function sanimate() {
+    var now = Date.now();
+    var delta = Math.min(now - sLast, 2000);
+    sLast = now;
+    var steps = Math.max(1, Math.round(delta / 16.67));
+    for (var st = 0; st < steps; st++) {
+      sframe++;
+      if (sphase === 'launch') { supdateRocket(); sdrawRocket(); }
+    }
+    if (sphase === 'forming' && !sDone && sframe > 300) {
+      sDone = true;
+      sDoneAt = now;
+    }
+    sctx.fillStyle = 'rgba(2,3,10,0.18)';
+    sctx.fillRect(0, 0, SW, SH);
+    sdrawStars();
+    if (sphase === 'forming') { sdrawFlash(); sdrawParticles(); sdrawSparkles(); }
+    if (sDone) {
+      var f = (now - sDoneAt - 3000) / 1000;
+      if (f > 0) {
+        specialCanvas.style.opacity = Math.max(0, 1 - f);
+        if (f >= 1) { sfinish(); return; }
+      }
+    }
+  }
+  var sTimer = setInterval(sanimate, 16);
+  sanimate();
+}
+
 document.getElementById('btnEnter').addEventListener('click', () => {
-  bgm.play().then(function () {
-    musicPlaying = true;
-    document.getElementById('btnMusic').textContent = '🎵 暂停';
-  }).catch(function () {});
+  // 先关入场门
   document.getElementById('gate').classList.add('hidden');
-  document.getElementById('envelopeEl').style.display = '';
-  launchFireworks(6);
-  showToast('欢迎回家 ❤️');
+  document.querySelector('.footer').style.display = 'none';
+  document.querySelector('.side-panel').style.display = 'none';
+  runSpecialFirework(function () {
+    document.querySelector('.footer').style.display = '';
+    document.querySelector('.side-panel').style.display = '';
+    document.getElementById('envelopeEl').style.display = '';
+    bgm.play().then(function () {
+      musicPlaying = true;
+      document.getElementById('btnMusic').textContent = '🎵 暂停';
+    }).catch(function () {});
+    launchFireworks(6);
+    showToast('欢迎回家 ❤️');
+  });
 });
 
 // 信封点击 → 打开留言信
