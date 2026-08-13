@@ -996,12 +996,19 @@ function runSpecialFirework(callback) {
     off.width = SW; off.height = SH;
     var fontSize = Math.min(SW / 10, 82);
     octx.fillStyle = '#fff'; octx.textAlign = 'center'; octx.textBaseline = 'middle';
-    octx.font = '700 ' + fontSize + 'px "Microsoft YaHei", "PingFang SC", sans-serif';
+    function setFont(sz) { octx.font = '700 ' + sz + 'px "Microsoft YaHei", "PingFang SC", sans-serif'; }
+    setFont(fontSize);
+    // 文本超宽时缩小字号，保证完整显示
+    var tw = octx.measureText(smessage).width;
+    if (tw > SW * 0.92) {
+      fontSize = Math.floor(fontSize * (SW * 0.92) / tw);
+      setFont(fontSize);
+    }
     var textY = SH * 0.46;
     octx.fillText(smessage, SW / 2, textY);
     var data = octx.getImageData(0, 0, SW, SH).data;
     var pts = [];
-    var gap = SW < 520 ? 7 : 6;
+    var gap = SW < 520 ? 3 : 6;
     for (var y = 0; y < SH; y += gap) {
       for (var x = 0; x < SW; x += gap) {
         if (data[(y * SW + x) * 4 + 3] > 128) pts.push({ x: x, y: y });
