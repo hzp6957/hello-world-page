@@ -264,7 +264,7 @@ body {
     <button class="btn btn--gold" id="btnBubble">💖 爱心雨</button>
     <button class="btn btn--purple" id="btnStar">✨ 星尘</button>
     <button class="btn" id="btnMessage">💌 情话</button>
-    <button class="btn" id="btnMusic">A Thousand Years</button>
+    <button class="btn" id="btnMusic">🎵 音乐</button>
   </div>
   <div class="toast" id="toast">点击爱心有惊喜 · 按F放烟花</div>
 </div>
@@ -335,7 +335,7 @@ body {
 </div>
 
 <audio id="bgm" preload="auto" loop style="display:none">
-  <source src="a-thousand-years.mp3" type="audio/mpeg">
+  <source src="玻璃.mp3" type="audio/mpeg">
 </audio>
 
 
@@ -938,13 +938,13 @@ function toggleMusic() {
   if (musicPlaying) {
     bgm.pause();
     musicPlaying = false;
-    document.getElementById('btnMusic').textContent = 'A Thousand Years';
+    document.getElementById('btnMusic').textContent = '🎵 音乐';
     showToast('音乐已暂停');
   } else {
     bgm.play().then(() => {
       musicPlaying = true;
       document.getElementById('btnMusic').textContent = '🎵 暂停';
-      showToast('A Thousand Years ♪');
+      showToast('音乐响起 ♪');
     }).catch(() => { showToast('音乐加载失败'); });
   }
 }
@@ -1158,14 +1158,15 @@ document.getElementById('btnEnter').addEventListener('click', () => {
   document.getElementById('gate').classList.add('hidden');
   document.querySelector('.footer').style.display = 'none';
   document.querySelector('.side-panel').style.display = 'none';
+  // 音乐与烟花同时开始
+  bgm.play().then(function () {
+    musicPlaying = true;
+    document.getElementById('btnMusic').textContent = '🎵 暂停';
+  }).catch(function () {});
   runSpecialFirework(function () {
     document.querySelector('.footer').style.display = '';
     document.querySelector('.side-panel').style.display = '';
     document.getElementById('envelopeEl').style.display = '';
-    bgm.play().then(function () {
-      musicPlaying = true;
-      document.getElementById('btnMusic').textContent = '🎵 暂停';
-    }).catch(function () {});
     launchFireworks(6);
     showToast('欢迎回家 ❤️');
   });
